@@ -7,11 +7,14 @@ using InteractiveUtils
 # ╔═╡ 8a224b4b-f755-40b2-8bed-fad5bb58f785
 using DataFramesMeta
 
-# ╔═╡ 1b361b0b-2685-4f6f-a48a-d7072ac71609
-using DataFrames
-
 # ╔═╡ 9f130e24-32de-4a63-b8d9-202b5456ba58
 using PlutoUI
+
+# ╔═╡ 07ec0a82-f0b7-4788-ae16-8d6ad0a2abf9
+using Dates
+
+# ╔═╡ 3a241435-ea7d-4f24-982d-0ceec9218318
+TableOfContents(title="📚 Tabla de Contenidos", aside=true)
 
 # ╔═╡ 58133e6a-6038-446b-ab68-701cfd28ee38
 md"""
@@ -22,29 +25,35 @@ md"""
 # ╔═╡ 36fd3665-c41f-4142-bfe2-260bc7bf000b
 import CSV
 
-# ╔═╡ 3a241435-ea7d-4f24-982d-0ceec9218318
-TableOfContents(title="📚 Tabla de Contenidos", aside=true)
-
 # ╔═╡ c04cb8ca-0856-49cf-b8a4-434e9615466c
-md"""## Importar CSVs"""
+md"""## Importación de Datos"""
 
 # ╔═╡ b93b96fc-08ae-457c-b27a-13cc95b9e0c8
 tabla_aerodromos = CSV.read("../data/aerodromos.csv", DataFrame)
 
-# ╔═╡ 11e43a42-0e5b-4aea-956d-fc714326ace3
-tabla_reservas = CSV.read("../data/reservasV2.csv", DataFrame)
-
 # ╔═╡ d2bae887-ec35-45a5-93b8-9cfe5641e8bd
 tabla_rutas = CSV.read("../data/rutas.csv", DataFrame)
 
+# ╔═╡ 7cfedd43-4a2c-49bd-93a0-9e066f626f51
+md"""Debemos usar un formato específico para que CSV reconozca las fechas en el CSV:"""
+
 # ╔═╡ 50fc9dba-1026-4b57-9eba-a056fa05d1b9
-tabla_trabajadores = CSV.read("../data/trabajadores.csv", DataFrame)
+tabla_trabajadores = CSV.read("../data/trabajadores.csv", DataFrame, dateformat=DateFormat("d-m-y"))
+
+# ╔═╡ 21d4a33b-2c6e-4f0a-9ff1-361efa66dd77
+md"""Para la tabla reserva debemos también ajustar el formato de fecha:"""
+
+# ╔═╡ 11e43a42-0e5b-4aea-956d-fc714326ace3
+tabla_reservas = CSV.read("../data/reservasV2.csv", DataFrame, dateformat=DateFormat("d-m-y"))
+
+# ╔═╡ d5b601cd-756d-40f8-bf53-9d2a19f3d5e9
+md"""El archivo de vuelos usa un formato de fecha distinto a reservas y trabajadores, y aunque incluye horas, no son horas *timezone aware*, por lo que asumimos que se encuentran en UTC."""
 
 # ╔═╡ e2f0dc89-7385-40bf-a76c-b5639f477011
-tabla_vuelos = CSV.read("../data/vuelos.csv", DataFrame)
+tabla_vuelos = CSV.read("../data/vuelos.csv", DataFrame, dateformat=DateFormat("y-m-d H:M:S"))
 
 # ╔═╡ 3c3804dc-ea57-4458-a83d-2b250b80427d
-md"""## Extracción de Datos
+md"""## Procesamiento de Datos
 ### Aerodromos
 """
 
@@ -220,8 +229,130 @@ puntos_ruta
 # ╔═╡ 22ef1f47-1ced-4f4b-ac60-ce4eb6996eb8
 md"""### Trabajadores"""
 
-# ╔═╡ 22617b8c-d588-4f6a-86bd-5e84074e0aef
+# ╔═╡ e2ad59e3-481e-43bb-8c28-463ceeacc2bf
+md"""Por ahora nos limitamos a la info de la tripulación, sin vincular los datos con vuelos todavía."""
 
+# ╔═╡ 22617b8c-d588-4f6a-86bd-5e84074e0aef
+struct Tripulacion
+	id::Int64
+	nombre::String
+	fecha_nacimiento::Date
+	pasaporte::String
+end
+
+# ╔═╡ 4719aca1-3887-4474-8e5a-0260d40d516e
+tabla_trabajadores
+
+# ╔═╡ b3748a10-28fb-4495-8ef8-50a159ff13f3
+begin
+	# No sé como pluralizar esto xd
+	tripulaciones = Vector{Tripulacion}()
+	for trabajador in eachrow(tabla_trabajadores)
+		push!(tripulaciones, Tripulacion(
+			trabajador.trabajador_id,
+			trabajador.nombre,
+			trabajador.fecha_nacimiento,
+			trabajador.pasaporte
+		))
+	end
+end
+
+# ╔═╡ cc26848c-1e5e-4af7-8db8-c9b6a7939437
+tripulaciones
+
+# ╔═╡ 845361e9-c256-40ba-a7ed-a75ddf163b02
+md"""### Aerolineas"""
+
+# ╔═╡ d5c42dc3-1729-4f03-a7ca-10cefc617382
+md"""Aquí tenemos que cruzar los datos en tanto rutas como trabajadores para asegurnanos de caracterizar bien todas las aerolíneas presentes.
+
+Una vez hecho esto, podemos rellenar las relaciones a las licencias (que dependen de la compañía), y eventualmente los vuelos."""
+
+# ╔═╡ 9a50a7c2-c398-4eac-af89-a9a62a00e873
+struct Aerolinea
+	id::Int64
+	nombre::String
+	codigo::String
+end
+
+# ╔═╡ 0f428918-6733-42f7-b540-2e60ed5b4129
+begin
+	aerolineas = Vector{Aerolinea}()
+	# Buscamos todos los códigos de aerolíneas en
+	# las tablas de trabajadores y vuelos
+	codigos_en_trabajadores = sort(filter(
+		x -> ! ismissing(x), unique(tabla_trabajadores.codigo_compania)
+	))
+	codigos_en_vuelos = sort(unique(tabla_vuelos.codigo_compania))
+	# En el mundo real esto no tiene por qué ser cierto,
+	# Entendido que una aerolinea podria dejar de tener vuelos por un tiempo
+	# O incluso podria dejar de tener empleados, aunque eso ya se escapa la modelación
+	# permitida por el formato de datos entregado
+	@assert codigos_en_vuelos == codigos_en_trabajadores
+
+	for codigo in codigos_en_trabajadores
+		# Find a sample row
+		sample_id = findfirst(
+			a -> a.codigo_compania == codigo, eachrow(tabla_trabajadores)
+		)
+		sample = tabla_trabajadores[sample_id, :]
+		# Now add the airline
+		push!(aerolineas, Aerolinea(
+			# Generate a sequential ID
+			length(aerolineas) + 1,
+			# Get name from sample
+			sample.nombre_compania,
+			# Use the code we already have
+			codigo
+		))
+	end
+end
+
+# ╔═╡ 053c7f08-fec8-48ec-831b-3bd14523d9b1
+md"""Ahora podemos crear las licencias."""
+
+# ╔═╡ be0be98f-0b55-4703-a7fb-d1ba82ee0f45
+struct Licencia
+	id::Int64
+	id_piloto::Int64
+	id_aerolinea::Int64
+end
+
+# ╔═╡ 2e6cb744-a504-4203-8c62-839b2d3864b2
+md"""Una observación importante es que hay entradas en la tabla de trabajadores que no tienen registros de empleo, teniendo datos faltantes sobre compañías. Dado que en principio podrían estar simplemente "cesantes", los incluiremos de todas formas en la base de datos."""
+
+# ╔═╡ 220f157d-1309-4f29-8bed-8646504f3d72
+findall(t -> ismissing(t.codigo_compania), eachrow(tabla_trabajadores))
+
+# ╔═╡ dc11651d-5791-4ad5-87ea-fbf1bc7b3fa8
+md"""Ahora iteramos sobre los empleados nuevamente para producir las licencias."""
+
+# ╔═╡ 76762f57-379f-4dc6-867e-9e069196e709
+begin
+	licencias = Vector{Licencia}()
+	for trabajador in eachrow(tabla_trabajadores)
+		licencia = trabajador.licencia_actual_id
+		codigo_compania = trabajador.codigo_compania
+		# Si encontramos una licencia
+		if ! ismissing(licencia) && ! ismissing(codigo_compania)
+			# Encontramos el ID de la compañía
+			airline_index = findfirst(a -> a.codigo == codigo_compania, aerolineas)
+			airline = aerolineas[airline_index]
+			# Creamos la licencia
+			push!(licencias, Licencia(
+				trabajador.licencia_actual_id,
+				trabajador.trabajador_id,
+				trabajador.vuelo_id
+			))
+		end
+	end
+end
+
+# ╔═╡ 7f2a5aa6-408b-4621-8530-13b09af39716
+licencias
+
+# ╔═╡ 1307885f-0668-43d8-ae70-42a1aced9ba5
+length(licencias)
 
 # ╔═╡ f26d3ef4-61d3-4b4d-b727-af60c91528ab
 # ╠═╡ disabled = true
@@ -237,17 +368,22 @@ md"""### Trabajadores"""
 	))
   ╠═╡ =#
 
+# ╔═╡ 18fd36e5-e277-459e-b5d1-61b50a0e6b50
+length(unique(licencias))
+
+# ╔═╡ 5b2bfca0-696b-4748-bcdd-4812c48af40b
+@info "Licencias repetidas: " setdiff(licencias, unique(licencias))
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DataFramesMeta = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 
 [compat]
 CSV = "~0.10.4"
-DataFrames = "~1.3.4"
 DataFramesMeta = "~0.11.0"
 PlutoUI = "~0.7.38"
 """
@@ -630,17 +766,20 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 """
 
 # ╔═╡ Cell order:
+# ╟─3a241435-ea7d-4f24-982d-0ceec9218318
 # ╟─58133e6a-6038-446b-ab68-701cfd28ee38
 # ╠═36fd3665-c41f-4142-bfe2-260bc7bf000b
 # ╠═8a224b4b-f755-40b2-8bed-fad5bb58f785
-# ╠═1b361b0b-2685-4f6f-a48a-d7072ac71609
 # ╠═9f130e24-32de-4a63-b8d9-202b5456ba58
-# ╠═3a241435-ea7d-4f24-982d-0ceec9218318
+# ╠═07ec0a82-f0b7-4788-ae16-8d6ad0a2abf9
 # ╟─c04cb8ca-0856-49cf-b8a4-434e9615466c
 # ╠═b93b96fc-08ae-457c-b27a-13cc95b9e0c8
-# ╠═11e43a42-0e5b-4aea-956d-fc714326ace3
 # ╠═d2bae887-ec35-45a5-93b8-9cfe5641e8bd
+# ╟─7cfedd43-4a2c-49bd-93a0-9e066f626f51
 # ╠═50fc9dba-1026-4b57-9eba-a056fa05d1b9
+# ╟─21d4a33b-2c6e-4f0a-9ff1-361efa66dd77
+# ╠═11e43a42-0e5b-4aea-956d-fc714326ace3
+# ╟─d5b601cd-756d-40f8-bf53-9d2a19f3d5e9
 # ╠═e2f0dc89-7385-40bf-a76c-b5639f477011
 # ╟─3c3804dc-ea57-4458-a83d-2b250b80427d
 # ╟─8460f7dd-de9a-4ae3-acf7-3fc63ba09cff
@@ -666,7 +805,25 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═81c35341-002d-45c5-ae4f-16051d1d8297
 # ╠═be69af11-b8c3-40ad-b7e1-2ed0dd6432a0
 # ╟─22ef1f47-1ced-4f4b-ac60-ce4eb6996eb8
+# ╟─e2ad59e3-481e-43bb-8c28-463ceeacc2bf
 # ╠═22617b8c-d588-4f6a-86bd-5e84074e0aef
+# ╠═4719aca1-3887-4474-8e5a-0260d40d516e
+# ╠═b3748a10-28fb-4495-8ef8-50a159ff13f3
+# ╠═cc26848c-1e5e-4af7-8db8-c9b6a7939437
+# ╟─845361e9-c256-40ba-a7ed-a75ddf163b02
+# ╟─d5c42dc3-1729-4f03-a7ca-10cefc617382
+# ╠═9a50a7c2-c398-4eac-af89-a9a62a00e873
+# ╠═0f428918-6733-42f7-b540-2e60ed5b4129
+# ╟─053c7f08-fec8-48ec-831b-3bd14523d9b1
+# ╠═be0be98f-0b55-4703-a7fb-d1ba82ee0f45
+# ╟─2e6cb744-a504-4203-8c62-839b2d3864b2
+# ╠═220f157d-1309-4f29-8bed-8646504f3d72
+# ╟─dc11651d-5791-4ad5-87ea-fbf1bc7b3fa8
+# ╠═76762f57-379f-4dc6-867e-9e069196e709
+# ╠═7f2a5aa6-408b-4621-8530-13b09af39716
+# ╠═1307885f-0668-43d8-ae70-42a1aced9ba5
 # ╟─f26d3ef4-61d3-4b4d-b727-af60c91528ab
+# ╠═18fd36e5-e277-459e-b5d1-61b50a0e6b50
+# ╠═5b2bfca0-696b-4748-bcdd-4812c48af40b
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

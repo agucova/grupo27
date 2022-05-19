@@ -180,8 +180,7 @@ alter table vuelo
 
 /* Relation 'destino_vuelo' */
 alter table vuelo
-  add constraint destino_vuelo foreign key (id_destino) references aerodromo (id)
-  ;
+  add constraint destino_vuelo foreign key (id_destino) references aerodromo (id);
 
 /* Relation 'aerolinea_vuelo' */
 alter table vuelo
