@@ -58,7 +58,7 @@ md"""## Procesamiento de Datos
 """
 
 # ╔═╡ 8460f7dd-de9a-4ae3-acf7-3fc63ba09cff
-md"""Definimos las estructuras de datos que vamos a usar"""
+md"""Definimos las estructuras de datos que vamos a usar:"""
 
 # ╔═╡ 7ee22f95-5af8-44e9-983a-a62cffdf00c5
 struct Pais
@@ -84,7 +84,7 @@ struct Aerodromo
 end
 
 # ╔═╡ f69e5c6b-85af-49e8-afde-6865d7baba5d
-md"""Primero identificamos los paises y sus ciudades respectivas en el diccionario `paises_ciudades`"""
+md"""Primero identificamos los paises y sus ciudades respectivas en el diccionario `paises_ciudades`. (En Julia `a ∉ b` es equivalente a `a not in b` en Python)."""
 
 # ╔═╡ ff9ceb7c-1d42-45c9-a65d-8af8b40e0aec
 begin
@@ -132,6 +132,21 @@ paises
 # ╔═╡ 29c14d56-bfef-4f25-ba17-318a644da2f1
 ciudades
 
+# ╔═╡ 7a815ed6-a6fb-4971-b84b-8c566dff6a48
+md"""Verificamos que no hayan paises o ciudades duplicadas:"""
+
+# ╔═╡ 1f3e85c1-9d45-4ef5-b218-c9df553c8233
+nombre_paises = [pais.nombre for pais in paises]
+
+# ╔═╡ a26adba2-3d29-4a7a-9752-1396fe4e4efc
+nombre_ciudades = [ciudad.nombre for ciudad in ciudades]
+
+# ╔═╡ 360bf1d5-62e9-405d-8c7c-375b73dfe720
+@assert unique(nombre_paises) == nombre_paises
+
+# ╔═╡ d073c943-4e4e-4bb3-b667-806bc1147d21
+@assert unique(nombre_ciudades) == nombre_ciudades
+
 # ╔═╡ 32fc00bd-63f8-4c41-a9f4-de79f95651b3
 md"""Ahora pasamos a crear los aerodromos"""
 
@@ -139,6 +154,8 @@ md"""Ahora pasamos a crear los aerodromos"""
 begin
 	aerodromos = Vector{Aerodromo}()
 	for aerodromo in eachrow(tabla_aerodromos)
+		# Con esto asumimos que no hay nombres repetidos de ciudades
+		# Lo que no necesariamente es realista, pero es verdadero en este dataset
 		id_ciudad = findfirst(c -> c.nombre == aerodromo.nombre_ciudad, ciudades)
 		push!(aerodromos, Aerodromo(
 			# We don't need to generate IDs like in ciudad or pais
@@ -156,6 +173,12 @@ end
 
 # ╔═╡ f6fe5132-7f13-488c-b73b-5be390db57a6
 aerodromos
+
+# ╔═╡ 5230fa1e-7ce7-4c54-9633-5441a410d767
+md"""Verificamos que no hayan aerodromos duplicados:"""
+
+# ╔═╡ ae712ff8-6e16-4487-9fb7-9d105ef05dd9
+@assert unique(aerodromos) == aerodromos
 
 # ╔═╡ ca9eceb6-f46a-4389-a0a3-d0580242a537
 md"""### Rutas"""
@@ -219,6 +242,15 @@ rutas
 # ╔═╡ 81c35341-002d-45c5-ae4f-16051d1d8297
 puntos_ruta
 
+# ╔═╡ 4405fe29-51d0-4bc8-aef6-bf1245ac9f16
+md"""Verificamos que no hay rutas duplicadas:"""
+
+# ╔═╡ 072f0721-5d0e-406e-82db-545ce1db11ed
+nombres_ruta = [ruta.nombre for ruta in rutas]
+
+# ╔═╡ 58aab315-af4c-4329-a94d-1d143d93c518
+@assert unique(nombres_ruta) == nombres_ruta "Las rutas debiesen ser únicas"
+
 # ╔═╡ be69af11-b8c3-40ad-b7e1-2ed0dd6432a0
 # ╠═╡ disabled = true
 #=╠═╡
@@ -240,6 +272,23 @@ struct Tripulacion
 	pasaporte::String
 end
 
+# ╔═╡ e8b36ab8-7e37-4480-a577-3012b91f7459
+# ╠═╡ disabled = true
+#=╠═╡
+struct Piloto
+	id::Int64
+	nombre::String
+	fecha_nacimiento::Date
+	pasaporte::String
+end
+  ╠═╡ =#
+
+# ╔═╡ be0be98f-0b55-4703-a7fb-d1ba82ee0f45
+struct Licencia
+	id::Int64
+	id_piloto::Int64
+end
+
 # ╔═╡ 4719aca1-3887-4474-8e5a-0260d40d516e
 tabla_trabajadores
 
@@ -247,26 +296,58 @@ tabla_trabajadores
 begin
 	# No sé como pluralizar esto xd
 	tripulaciones = Vector{Tripulacion}()
+	tripulaciones_ya_agregadas = Vector{Int64}()
+	licencias = Vector{Licencia}()
+	licencias_ya_agregadas = Vector{Int64}()
 	for trabajador in eachrow(tabla_trabajadores)
-		push!(tripulaciones, Tripulacion(
-			trabajador.trabajador_id,
-			trabajador.nombre,
-			trabajador.fecha_nacimiento,
-			trabajador.pasaporte
-		))
+		if trabajador.trabajador_id ∉ tripulaciones_ya_agregadas
+			push!(tripulaciones, Tripulacion(
+				trabajador.trabajador_id,
+				trabajador.nombre,
+				trabajador.fecha_nacimiento,
+				trabajador.pasaporte
+			))
+			push!(tripulaciones_ya_agregadas, trabajador.trabajador_id)
+		end
+
+		# Ahora agregamos la licencia
+		licencia = trabajador.licencia_actual_id
+		if (! ismissing(licencia)) && licencia ∉ licencias_ya_agregadas
+			push!(licencias, Licencia(
+				licencia,
+				trabajador.trabajador_id
+			))
+			push!(licencias_ya_agregadas, licencia)
+		end
 	end
 end
 
 # ╔═╡ cc26848c-1e5e-4af7-8db8-c9b6a7939437
 tripulaciones
 
+# ╔═╡ 41212a6a-dd84-46ef-b840-5dbeed851e4b
+licencias
+
+# ╔═╡ 4b2ba701-7f42-4b10-92f5-2e40bdab315d
+@assert unique(tripulaciones) == tripulaciones "Las entradas de trip. deberían ser únicas"
+
+# ╔═╡ 0977b4ed-845f-4501-9bde-05d1c7ff0602
+@assert unique(licencias) == licencias "Las licencias deberían ser únicas."
+
 # ╔═╡ 845361e9-c256-40ba-a7ed-a75ddf163b02
 md"""### Aerolineas"""
 
 # ╔═╡ d5c42dc3-1729-4f03-a7ca-10cefc617382
-md"""Aquí tenemos que cruzar los datos en tanto rutas como trabajadores para asegurnanos de caracterizar bien todas las aerolíneas presentes.
+md"""Aquí tenemos que cruzar los datos en tanto rutas como trabajadores para asegurnanos de caracterizar bien todas las aerolíneas presentes."""
 
-Una vez hecho esto, podemos rellenar las relaciones a las licencias (que dependen de la compañía), y eventualmente los vuelos."""
+# ╔═╡ 2e6cb744-a504-4203-8c62-839b2d3864b2
+md"""Una observación importante es que hay entradas en la tabla de trabajadores que no tienen registros de empleo, teniendo datos faltantes sobre compañías. Dado que en principio podrían estar simplemente "cesantes", los incluiremos de todas formas en la base de datos."""
+
+# ╔═╡ 220f157d-1309-4f29-8bed-8646504f3d72
+findall(t -> ismissing(t.codigo_compania), eachrow(tabla_trabajadores))
+
+# ╔═╡ feffb922-d279-4c53-87f1-2db19d2ac697
+md"""Dicho eso, procedemos a procesar los datos:"""
 
 # ╔═╡ 9a50a7c2-c398-4eac-af89-a9a62a00e873
 struct Aerolinea
@@ -308,71 +389,75 @@ begin
 	end
 end
 
-# ╔═╡ 053c7f08-fec8-48ec-831b-3bd14523d9b1
-md"""Ahora podemos crear las licencias."""
+# ╔═╡ f2c19dfa-b360-487f-b3ae-0a453b3e7bbb
+md"""Notoriamente, hay una aerolínea llamada `NO_COMPANY`:"""
 
-# ╔═╡ be0be98f-0b55-4703-a7fb-d1ba82ee0f45
-struct Licencia
+# ╔═╡ 5265b537-ee35-4151-b2f9-251e65f9e1af
+aerolineas
+
+# ╔═╡ 1c4b7f07-15a5-4b70-bb6c-8aebfb1524b6
+md"""Dado que esta si tiene vuelos y un código, asumiremos que constituye una aerolínea real, incluso si es un placeholder."""
+
+# ╔═╡ b41d8f03-8dad-4e57-818c-25cb5cf46044
+md"""Verificamos que no se repitan las aerolineas:"""
+
+# ╔═╡ 6f06eac0-c8a2-458a-8573-d6718ed7db15
+nombre_aerolineas = [aerolinea.nombre for aerolinea in aerolineas]
+
+# ╔═╡ 600c127c-f395-4fef-8a7e-9464033701da
+@assert unique(nombre_aerolineas) == nombre_aerolineas
+
+# ╔═╡ 71cbde30-d2ae-4729-a499-69b842c7c138
+md"""### Vuelos"""
+
+# ╔═╡ 22ce3784-45a6-49bb-a643-5b25397c849c
+struct Avion
 	id::Int64
-	id_piloto::Int64
-	id_aerolinea::Int64
+	nombre::String
+	modelo::String
+	peso::Float64
+	codigo::String
 end
 
-# ╔═╡ 2e6cb744-a504-4203-8c62-839b2d3864b2
-md"""Una observación importante es que hay entradas en la tabla de trabajadores que no tienen registros de empleo, teniendo datos faltantes sobre compañías. Dado que en principio podrían estar simplemente "cesantes", los incluiremos de todas formas en la base de datos."""
+# ╔═╡ 08948bf5-859b-49db-bef9-2aa47314273e
+struct Vuelo
+	id::Int64
+	id_aerolinea::Int64
+	id_origen::Int64
+	id_destino::Int64
+	id_avion::Int64
+	id_ruta::Int64
+	id_piloto::Int64
+	id_copiloto::Int64
+	codigo::String
+	fecha_salida::DateTime
+	fecha_llegada::DateTime
+	velocidad::Float64
+	altitud::Float64
+	estado::String
+end
 
-# ╔═╡ 220f157d-1309-4f29-8bed-8646504f3d72
-findall(t -> ismissing(t.codigo_compania), eachrow(tabla_trabajadores))
-
-# ╔═╡ dc11651d-5791-4ad5-87ea-fbf1bc7b3fa8
-md"""Ahora iteramos sobre los empleados nuevamente para producir las licencias."""
-
-# ╔═╡ 76762f57-379f-4dc6-867e-9e069196e709
+# ╔═╡ 93c50119-b5b3-4ac2-8013-107f0c5218a1
 begin
-	licencias = Vector{Licencia}()
-	for trabajador in eachrow(tabla_trabajadores)
-		licencia = trabajador.licencia_actual_id
-		codigo_compania = trabajador.codigo_compania
-		# Si encontramos una licencia
-		if ! ismissing(licencia) && ! ismissing(codigo_compania)
-			# Encontramos el ID de la compañía
-			airline_index = findfirst(a -> a.codigo == codigo_compania, aerolineas)
-			airline = aerolineas[airline_index]
-			# Creamos la licencia
-			push!(licencias, Licencia(
-				trabajador.licencia_actual_id,
-				trabajador.trabajador_id,
-				trabajador.vuelo_id
+	aviones = Vector{Avion}()
+	aviones_ya_agregados = Vector{String}()
+	vuelos = Vector{Vuelo}()
+	for vuelo in eachrow(tabla_vuelos)
+		if vuelo.codigo_aeronave ∉ aviones_ya_agregados
+			push!(aviones, Avion(
+				length(aviones) + 1,
+				vuelo.nombre_aeronave,
+				vuelo.modelo,
+				vuelo.peso,
+				vuelo.codigo_aeronave
 			))
+			push!(aviones_ya_agregados, vuelo.codigo_aeronave)
 		end
 	end
 end
 
-# ╔═╡ 7f2a5aa6-408b-4621-8530-13b09af39716
-licencias
-
-# ╔═╡ 1307885f-0668-43d8-ae70-42a1aced9ba5
-length(licencias)
-
-# ╔═╡ f26d3ef4-61d3-4b4d-b727-af60c91528ab
-# ╠═╡ disabled = true
-#=╠═╡
-	push!(aerodromos, Aerodromo(
-		aerodromo.aerodromo_id,
-		aerodromo.nombre,
-		aerodromo.codigo_ICAO,
-		aerodromo.codigo_IATA,
-		# Por ISO6709, se usa (lat, long)
-		(aerodromo.latitud, aerodromo.longitud),
-		
-	))
-  ╠═╡ =#
-
-# ╔═╡ 18fd36e5-e277-459e-b5d1-61b50a0e6b50
-length(unique(licencias))
-
-# ╔═╡ 5b2bfca0-696b-4748-bcdd-4812c48af40b
-@info "Licencias repetidas: " setdiff(licencias, unique(licencias))
+# ╔═╡ 079a5281-ae56-4d93-9c2a-98954d877075
+aviones
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -792,10 +877,17 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═1ed2c24e-3c71-4e2c-b7b5-eafd45aa4625
 # ╠═1d36072c-6981-4b99-a864-f1239d717050
 # ╠═29c14d56-bfef-4f25-ba17-318a644da2f1
+# ╟─7a815ed6-a6fb-4971-b84b-8c566dff6a48
+# ╠═1f3e85c1-9d45-4ef5-b218-c9df553c8233
+# ╠═a26adba2-3d29-4a7a-9752-1396fe4e4efc
+# ╠═360bf1d5-62e9-405d-8c7c-375b73dfe720
+# ╠═d073c943-4e4e-4bb3-b667-806bc1147d21
 # ╟─32fc00bd-63f8-4c41-a9f4-de79f95651b3
 # ╠═42c80dd1-011f-49f5-a2e8-da1fd1042724
 # ╠═f6fe5132-7f13-488c-b73b-5be390db57a6
-# ╟─ca9eceb6-f46a-4389-a0a3-d0580242a537
+# ╟─5230fa1e-7ce7-4c54-9633-5441a410d767
+# ╠═ae712ff8-6e16-4487-9fb7-9d105ef05dd9
+# ╠═ca9eceb6-f46a-4389-a0a3-d0580242a537
 # ╠═21c612b7-d964-42ff-b449-d9b777fcb099
 # ╠═fee7e0dd-2cde-4a21-87ae-b2248ff6efe4
 # ╠═c64c4d82-2472-42b3-bffa-e5f407c75683
@@ -803,27 +895,38 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═472293ba-9421-4371-8096-9ade3f04b0dd
 # ╠═00826089-a9eb-491f-9625-4e71b7ce8801
 # ╠═81c35341-002d-45c5-ae4f-16051d1d8297
+# ╟─4405fe29-51d0-4bc8-aef6-bf1245ac9f16
+# ╠═072f0721-5d0e-406e-82db-545ce1db11ed
+# ╠═58aab315-af4c-4329-a94d-1d143d93c518
 # ╠═be69af11-b8c3-40ad-b7e1-2ed0dd6432a0
 # ╟─22ef1f47-1ced-4f4b-ac60-ce4eb6996eb8
 # ╟─e2ad59e3-481e-43bb-8c28-463ceeacc2bf
 # ╠═22617b8c-d588-4f6a-86bd-5e84074e0aef
+# ╠═e8b36ab8-7e37-4480-a577-3012b91f7459
+# ╠═be0be98f-0b55-4703-a7fb-d1ba82ee0f45
 # ╠═4719aca1-3887-4474-8e5a-0260d40d516e
 # ╠═b3748a10-28fb-4495-8ef8-50a159ff13f3
 # ╠═cc26848c-1e5e-4af7-8db8-c9b6a7939437
-# ╟─845361e9-c256-40ba-a7ed-a75ddf163b02
+# ╠═41212a6a-dd84-46ef-b840-5dbeed851e4b
+# ╠═4b2ba701-7f42-4b10-92f5-2e40bdab315d
+# ╠═0977b4ed-845f-4501-9bde-05d1c7ff0602
+# ╠═845361e9-c256-40ba-a7ed-a75ddf163b02
 # ╟─d5c42dc3-1729-4f03-a7ca-10cefc617382
-# ╠═9a50a7c2-c398-4eac-af89-a9a62a00e873
-# ╠═0f428918-6733-42f7-b540-2e60ed5b4129
-# ╟─053c7f08-fec8-48ec-831b-3bd14523d9b1
-# ╠═be0be98f-0b55-4703-a7fb-d1ba82ee0f45
 # ╟─2e6cb744-a504-4203-8c62-839b2d3864b2
 # ╠═220f157d-1309-4f29-8bed-8646504f3d72
-# ╟─dc11651d-5791-4ad5-87ea-fbf1bc7b3fa8
-# ╠═76762f57-379f-4dc6-867e-9e069196e709
-# ╠═7f2a5aa6-408b-4621-8530-13b09af39716
-# ╠═1307885f-0668-43d8-ae70-42a1aced9ba5
-# ╟─f26d3ef4-61d3-4b4d-b727-af60c91528ab
-# ╠═18fd36e5-e277-459e-b5d1-61b50a0e6b50
-# ╠═5b2bfca0-696b-4748-bcdd-4812c48af40b
+# ╟─feffb922-d279-4c53-87f1-2db19d2ac697
+# ╠═9a50a7c2-c398-4eac-af89-a9a62a00e873
+# ╠═0f428918-6733-42f7-b540-2e60ed5b4129
+# ╟─f2c19dfa-b360-487f-b3ae-0a453b3e7bbb
+# ╠═5265b537-ee35-4151-b2f9-251e65f9e1af
+# ╟─1c4b7f07-15a5-4b70-bb6c-8aebfb1524b6
+# ╟─b41d8f03-8dad-4e57-818c-25cb5cf46044
+# ╠═6f06eac0-c8a2-458a-8573-d6718ed7db15
+# ╠═600c127c-f395-4fef-8a7e-9464033701da
+# ╟─71cbde30-d2ae-4729-a499-69b842c7c138
+# ╠═22ce3784-45a6-49bb-a643-5b25397c849c
+# ╠═08948bf5-859b-49db-bef9-2aa47314273e
+# ╠═93c50119-b5b3-4ac2-8013-107f0c5218a1
+# ╠═079a5281-ae56-4d93-9c2a-98954d877075
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
