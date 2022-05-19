@@ -177,7 +177,7 @@ ALTER TABLE costo
 /* Relation 'Origen_Vuelo' */
 ALTER TABLE vuelo
   ADD CONSTRAINT "Origen_Vuelo"
-    FOREIGN KEY (id_origen) REFERENCES aerodromo (id) ON DELETE na ON UPDATE na;
+    FOREIGN KEY (id_origen) REFERENCES aerodromo (id);
 
 /* Relation 'Destino_Vuelo' */
 ALTER TABLE vuelo
@@ -230,9 +230,3 @@ ALTER TABLE licencia
 ALTER TABLE licencia
   ADD CONSTRAINT aerolinea_licencia
     FOREIGN KEY ("Id_aerolinea") REFERENCES aerolinea (id);
-Main Diagram
-Main Diagram
-Info
-New version available. Download version 4.6.0 from
-https://www.datensen.com
-Close
