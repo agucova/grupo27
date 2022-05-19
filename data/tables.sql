@@ -1,232 +1,231 @@
-
-SET check_function_bodies = false;
+set check_function_bodies = false;
 
 /* Table 'aerolinea' */
-CREATE TABLE aerolinea(
-  id serial NOT NULL,
-  nombre varchar(80) NOT NULL,
-  codigo char(3) NOT NULL,
-  PRIMARY KEY(id)
+create table aerolinea(
+  id serial not null,
+  nombre varchar(80) not null,
+  codigo char(3) not null,
+  primary key(id)
 );
 
 /* Table 'tripulacion' */
-CREATE TABLE tripulacion(
-  id serial NOT NULL,
-  nombre varchar(120) NOT NULL,
-  fecha_nacimiento date NOT NULL,
-  pasaporte varchar(40) NOT NULL,
-  PRIMARY KEY(id)
+create table tripulacion(
+  id serial not null,
+  nombre varchar(120) not null,
+  fecha_nacimiento date not null,
+  pasaporte varchar(40) not null,
+  primary key(id)
 );
 
 /* Table 'vuelo' */
-CREATE TABLE vuelo(
-  id serial NOT NULL,
-  id_aerolinea integer NOT NULL,
-  id_origen integer NOT NULL,
-  id_destino integer NOT NULL,
-  id_avion integer NOT NULL,
-  id_ruta integer NOT NULL,
-  id_piloto integer NOT NULL,
-  id_copiloto integer NOT NULL,
-  codigo varchar(20) NOT NULL,
-  fecha_salida timestamp with time zone NOT NULL,
-  fecha_llegada timestamp with time zone NOT NULL,
-  velocidad float8 NOT NULL,
-  altitud float8 NOT NULL,
+create table vuelo(
+  id serial not null,
+  id_aerolinea integer not null,
+  id_origen integer not null,
+  id_destino integer not null,
+  id_avion integer not null,
+  id_ruta integer not null,
+  id_piloto integer not null,
+  id_copiloto integer not null,
+  codigo varchar(20) not null,
+  fecha_salida timestamp with time zone not null,
+  fecha_llegada timestamp with time zone not null,
+  velocidad float8 not null,
+  altitud float8 not null,
   estado varchar(20),
-  PRIMARY KEY(id)
+  primary key(id)
 );
 
 /* Table 'tripulacion_vuelo' */
-CREATE TABLE tripulacion_vuelo(
-id_tripulante integer NOT NULL, id_vuelo integer NOT NULL,
-  rol varchar(40) NOT NULL
+create table tripulacion_vuelo(
+id_tripulante integer not null, id_vuelo integer not null,
+  rol varchar(40) not null
 );
 
 /* Table 'aerodromo' */
-CREATE TABLE aerodromo(
-  id serial NOT NULL,
-  nombre varchar(50) NOT NULL,
-  icao char(4) NOT NULL,
-  iata char(3) NOT NULL,
-  posicion point NOT NULL,
-  id_ciudad integer NOT NULL,
-  PRIMARY KEY(id)
+create table aerodromo(
+  id serial not null,
+  nombre varchar(50) not null,
+  icao char(4) not null,
+  iata char(3) not null,
+  posicion point not null,
+  id_ciudad integer not null,
+  primary key(id)
 );
 
 /* Table 'ciudad' */
-CREATE TABLE ciudad(
-  id integer NOT NULL,
+create table ciudad(
+  id integer not null,
   nombre varchar(60),
-  id_pais integer NOT NULL,
-  PRIMARY KEY(id)
+  id_pais integer not null,
+  primary key(id)
 );
 
 /* Table 'punto_ruta' */
-CREATE TABLE punto_ruta(
-  id serial NOT NULL,
-  id_ruta integer NOT NULL,
-  indice integer NOT NULL,
-  nombre varchar(100) NOT NULL,
-  posicion point NOT NULL,
-  PRIMARY KEY(id)
+create table punto_ruta(
+  id serial not null,
+  id_ruta integer not null,
+  indice integer not null,
+  nombre varchar(100) not null,
+  posicion point not null,
+  primary key(id)
 );
 
 /* Table 'pasajero' */
-CREATE TABLE pasajero(
-  id serial NOT NULL,
-  nombre varchar(50) NOT NULL,
-  fecha_nacimiento date NOT NULL,
-  nacionalidad varchar(50) NOT NULL,
+create table pasajero(
+  id serial not null,
+  nombre varchar(50) not null,
+  fecha_nacimiento date not null,
+  nacionalidad varchar(50) not null,
   pasaporte varchar(40),
-  PRIMARY KEY(id)
+  primary key(id)
 );
 
 /* Table 'reserva' */
-CREATE TABLE reserva(
-  id integer NOT NULL,
-  id_reservante integer NOT NULL,
-  codigo varchar(12) NOT NULL,
-  PRIMARY KEY(id)
+create table reserva(
+  id integer not null,
+  id_reservante integer not null,
+  codigo varchar(12) not null,
+  primary key(id)
 );
 
 /* Table 'ticket' */
-CREATE TABLE ticket(
-  id integer NOT NULL,
-  id_vuelo integer NOT NULL,
-  id_pasajero integer NOT NULL,
-  id_reserva integer NOT NULL,
-  asiento integer NOT NULL,
-  clase varchar(20) NOT NULL,
-  comida_y_maleta boolean NOT NULL,
-  PRIMARY KEY(id)
+create table ticket(
+  id integer not null,
+  id_vuelo integer not null,
+  id_pasajero integer not null,
+  id_reserva integer not null,
+  asiento integer not null,
+  clase varchar(20) not null,
+  comida_y_maleta boolean not null,
+  primary key(id)
 );
 
 /* Table 'costo' */
-CREATE TABLE costo
-  (id_ruta integer NOT NULL, id_avion integer NOT NULL, costo numeric);
+create table costo
+  (id_ruta integer not null, id_avion integer not null, costo numeric);
 
 /* Table 'avion' */
-CREATE TABLE avion(
-  id serial NOT NULL,
-  nombre varchar(50) NOT NULL,
-  modelo varchar(50) NOT NULL,
-  peso float8 NOT NULL,
-  codigo char(7) NOT NULL,
-  PRIMARY KEY(id)
+create table avion(
+  id serial not null,
+  nombre varchar(50) not null,
+  modelo varchar(50) not null,
+  peso float8 not null,
+  codigo char(7) not null,
+  primary key(id)
 );
 
 /* Table 'ruta' */
-CREATE TABLE ruta
-  (id serial NOT NULL, nombre varchar(6) NOT NULL, PRIMARY KEY(id));
+create table ruta
+  (id serial not null, nombre varchar(6) not null, primary key(id));
 
 /* Table 'pais' */
-CREATE TABLE pais
-  (id serial NOT NULL, nombre varchar(80) NOT NULL, PRIMARY KEY(id));
+create table pais
+  (id serial not null, nombre varchar(80) not null, primary key(id));
 
 /* Table 'piloto' */
-CREATE TABLE piloto(
-  id serial NOT NULL,
-  nombre varchar(120) NOT NULL,
-  fecha_nacimiento date NOT NULL,
-  pasaporte varchar(40) NOT NULL,
-  PRIMARY KEY(id)
+create table piloto(
+  id serial not null,
+  nombre varchar(120) not null,
+  fecha_nacimiento date not null,
+  pasaporte varchar(40) not null,
+  primary key(id)
 );
 
 /* Table 'licencia' */
-CREATE TABLE licencia(
-  id integer NOT NULL,
-  id_piloto integer NOT NULL,
-  "Id_aerolinea" integer NOT NULL,
-  PRIMARY KEY(id)
+create table licencia(
+  id integer not null,
+  id_piloto integer not null,
+  id_aerolinea integer not null,
+  primary key(id)
 );
 
-/* Relation 'Tripulacion_TripulacionVuelo' */
-ALTER TABLE tripulacion_vuelo
-  ADD CONSTRAINT "Tripulacion_TripulacionVuelo"
-    FOREIGN KEY (id_tripulante) REFERENCES tripulacion (id);
+/* Relation 'tripulacion_tripulacionvuelo' */
+alter table tripulacion_vuelo
+  add constraint tripulacion_tripulacionvuelo
+    foreign key (id_tripulante) references tripulacion (id);
 
-/* Relation 'Vuelo_TripulacionVuelo' */
-ALTER TABLE tripulacion_vuelo
-  ADD CONSTRAINT "Vuelo_TripulacionVuelo"
-    FOREIGN KEY (id_vuelo) REFERENCES vuelo (id);
+/* Relation 'vuelo_tripulacionvuelo' */
+alter table tripulacion_vuelo
+  add constraint vuelo_tripulacionvuelo
+    foreign key (id_vuelo) references vuelo (id);
 
-/* Relation 'Ciudad_Aerodromo' */
-ALTER TABLE aerodromo
-  ADD CONSTRAINT "Ciudad_Aerodromo" FOREIGN KEY (id_ciudad) REFERENCES ciudad (id)
+/* Relation 'ciudad_aerodromo' */
+alter table aerodromo
+  add constraint ciudad_aerodromo foreign key (id_ciudad) references ciudad (id)
   ;
 
-/* Relation 'Vuelo_Ticket' */
-ALTER TABLE ticket
-  ADD CONSTRAINT "Vuelo_Ticket" FOREIGN KEY (id_vuelo) REFERENCES vuelo (id);
+/* Relation 'vuelo_ticket' */
+alter table ticket
+  add constraint vuelo_ticket foreign key (id_vuelo) references vuelo (id);
 
-/* Relation 'Pasajero_Ticket' */
-ALTER TABLE ticket
-  ADD CONSTRAINT "Pasajero_Ticket"
-    FOREIGN KEY (id_pasajero) REFERENCES pasajero (id);
+/* Relation 'pasajero_ticket' */
+alter table ticket
+  add constraint pasajero_ticket
+    foreign key (id_pasajero) references pasajero (id);
 
-/* Relation 'Pasajero_Reserva' */
-ALTER TABLE reserva
-  ADD CONSTRAINT "Pasajero_Reserva"
-    FOREIGN KEY (id_reservante) REFERENCES pasajero (id);
+/* Relation 'pasajero_reserva' */
+alter table reserva
+  add constraint pasajero_reserva
+    foreign key (id_reservante) references pasajero (id);
 
-/* Relation 'Avion_Costo' */
-ALTER TABLE costo
-  ADD CONSTRAINT "Avion_Costo" FOREIGN KEY (id_avion) REFERENCES avion (id);
+/* Relation 'avion_costo' */
+alter table costo
+  add constraint avion_costo foreign key (id_avion) references avion (id);
 
-/* Relation 'Origen_Vuelo' */
-ALTER TABLE vuelo
-  ADD CONSTRAINT "Origen_Vuelo"
-    FOREIGN KEY (id_origen) REFERENCES aerodromo (id);
+/* Relation 'origen_vuelo' */
+alter table vuelo
+  add constraint origen_vuelo
+    foreign key (id_origen) references aerodromo (id);
 
-/* Relation 'Destino_Vuelo' */
-ALTER TABLE vuelo
-  ADD CONSTRAINT "Destino_Vuelo"
-    FOREIGN KEY (id_destino) REFERENCES aerodromo (id);
+/* Relation 'destino_vuelo' */
+alter table vuelo
+  add constraint destino_vuelo foreign key (id_destino) references aerodromo (id)
+  ;
 
-/* Relation 'Aerolinea_Vuelo' */
-ALTER TABLE vuelo
-  ADD CONSTRAINT "Aerolinea_Vuelo"
-    FOREIGN KEY (id_aerolinea) REFERENCES aerolinea (id);
+/* Relation 'aerolinea_vuelo' */
+alter table vuelo
+  add constraint aerolinea_vuelo
+    foreign key (id_aerolinea) references aerolinea (id);
 
-/* Relation 'Avion_Vuelo' */
-ALTER TABLE vuelo
-  ADD CONSTRAINT "Avion_Vuelo" FOREIGN KEY (id_avion) REFERENCES avion (id);
+/* Relation 'avion_vuelo' */
+alter table vuelo
+  add constraint avion_vuelo foreign key (id_avion) references avion (id);
 
 /* Relation 'ruta_punto_ruta' */
-ALTER TABLE punto_ruta
-  ADD CONSTRAINT ruta_punto_ruta FOREIGN KEY (id_ruta) REFERENCES ruta (id);
+alter table punto_ruta
+  add constraint ruta_punto_ruta foreign key (id_ruta) references ruta (id);
 
 /* Relation 'ruta_costo' */
-ALTER TABLE costo
-  ADD CONSTRAINT ruta_costo FOREIGN KEY (id_ruta) REFERENCES ruta (id);
+alter table costo
+  add constraint ruta_costo foreign key (id_ruta) references ruta (id);
 
 /* Relation 'ruta_vuelo' */
-ALTER TABLE vuelo
-  ADD CONSTRAINT ruta_vuelo FOREIGN KEY (id_ruta) REFERENCES ruta (id);
+alter table vuelo
+  add constraint ruta_vuelo foreign key (id_ruta) references ruta (id);
 
 /* Relation 'reserva_ticket' */
-ALTER TABLE ticket
-  ADD CONSTRAINT reserva_ticket FOREIGN KEY (id_reserva) REFERENCES reserva (id)
+alter table ticket
+  add constraint reserva_ticket foreign key (id_reserva) references reserva (id)
   ;
 
 /* Relation 'pais_ciudad' */
-ALTER TABLE ciudad
-  ADD CONSTRAINT pais_ciudad FOREIGN KEY (id_pais) REFERENCES pais (id);
+alter table ciudad
+  add constraint pais_ciudad foreign key (id_pais) references pais (id);
 
 /* Relation 'piloto_vuelo' */
-ALTER TABLE vuelo
-  ADD CONSTRAINT piloto_vuelo FOREIGN KEY (id_piloto) REFERENCES piloto (id);
+alter table vuelo
+  add constraint piloto_vuelo foreign key (id_piloto) references piloto (id);
 
 /* Relation 'piloto_vuelo' */
-ALTER TABLE vuelo
-  ADD CONSTRAINT piloto_vuelo FOREIGN KEY (id_copiloto) REFERENCES piloto (id);
+alter table vuelo
+  add constraint piloto_vuelo foreign key (id_copiloto) references piloto (id);
 
 /* Relation 'piloto_licencia' */
-ALTER TABLE licencia
-  ADD CONSTRAINT piloto_licencia FOREIGN KEY (id_piloto) REFERENCES piloto (id);
+alter table licencia
+  add constraint piloto_licencia foreign key (id_piloto) references piloto (id);
 
 /* Relation 'aerolinea_licencia' */
-ALTER TABLE licencia
-  ADD CONSTRAINT aerolinea_licencia
-    FOREIGN KEY ("Id_aerolinea") REFERENCES aerolinea (id);
+alter table licencia
+  add constraint aerolinea_licencia
+    foreign key (id_aerolinea) references aerolinea (id);
