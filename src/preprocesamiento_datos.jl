@@ -69,8 +69,8 @@ end
 # ╔═╡ c04dd998-bf12-4170-8166-93f1e6dac518
 struct Ciudad
 	id::Int64
-	nombre::String
 	id_pais::Int64
+	nombre::String
 end
 
 # ╔═╡ 2900ed94-edf2-49db-9f3f-ade7dbe7f34e
@@ -78,9 +78,9 @@ struct Aerodromo
 	id::Int64
 	icao::String
 	iata::String
+	id_ciudad::Int64
 	nombre::String
 	posicion::Tuple{Float64, Float64}
-	id_ciudad::Int64
 end
 
 # ╔═╡ f69e5c6b-85af-49e8-afde-6865d7baba5d
@@ -119,8 +119,8 @@ begin
 			push!(ciudades, Ciudad(
 				# We determine the ID sequentially
 				length(ciudades) + 1,
-				ciudad,
-				id_pais
+				id_pais,
+				ciudad
 			))
 		end
 	end
@@ -163,10 +163,10 @@ begin
 			aerodromo.aerodromo_id,
 			aerodromo.codigo_ICAO,
 			aerodromo.codigo_IATA,
+			id_ciudad,
 			aerodromo.nombre,
 			# We use (lat, long) per ISO6709
-			(aerodromo.latitud, aerodromo.longitud),
-			id_ciudad
+			(aerodromo.latitud, aerodromo.longitud)
 		))
 	end
 	aerodromos
@@ -381,7 +381,10 @@ begin
 					push!(licencias, licencia_from_t(t))
 				end
 				# Maneja
-				push!(manejas, maneja_from_t(t))
+				i_maneja = findfirst(m -> m.id_vuelo == )
+				if !
+					push!(manejas, maneja_from_t(t))
+				end
 			end
 		end
 	end
@@ -515,10 +518,18 @@ struct Vuelo
 	estado::String
 end
 
+# ╔═╡ fb1f4340-0b89-4393-abf0-1a1c2a6ecdc2
+struct Costo
+	id_ruta::Int64
+	id_avion::Int64
+	costo::Int64
+end
+
 # ╔═╡ 93c50119-b5b3-4ac2-8013-107f0c5218a1
 begin
 	aviones = Vector{Avion}()
 	aviones_ya_agregados = Vector{String}()
+	costos = Costo[]
 	for vuelo in eachrow(tabla_vuelos)
 		if vuelo.codigo_aeronave ∉ aviones_ya_agregados
 			push!(aviones, Avion(
@@ -530,8 +541,22 @@ begin
 			))
 			push!(aviones_ya_agregados, vuelo.codigo_aeronave)
 		end
+		# Costo
+		i_avion = findfirst(a -> a.codigo == vuelo.codigo_aeronave, aviones)
+		id_avion = aviones[i_avion].id
+		i_costo = findfirst(c -> c.id_ruta == vuelo.ruta_id && c.id_avion == id_avion, costos)
+		if isnothing(i_costo)
+			push!(costos, Costo(
+				vuelo.ruta_id,
+				id_avion,
+				vuelo.valor
+			))
+		end
 	end
 end
+
+# ╔═╡ 7ff2a50f-3b59-44ce-a26f-9df720f3ca64
+costos
 
 # ╔═╡ c29d6738-e582-4c87-862e-9d26cfc29a9a
 function vuelo_from_v(v)
@@ -740,9 +765,11 @@ begin
 	aerolineas |> CSV.write("../tablas/aerolinea.csv")
 	aviones |> CSV.write("../tablas/avion.csv")
 	vuelos |> CSV.write("../tablas/vuelo.csv")
+	costos |> CSV.write("../tablas/costo.csv")
 	pasajeros |> CSV.write("../tablas/pasajero.csv")
 	reservas |> CSV.write("../tablas/reserva.csv")
 	tickets |> CSV.write("../tablas/ticket.csv")
+	
 
 end
 
@@ -1229,7 +1256,9 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╟─71cbde30-d2ae-4729-a499-69b842c7c138
 # ╠═22ce3784-45a6-49bb-a643-5b25397c849c
 # ╠═08948bf5-859b-49db-bef9-2aa47314273e
+# ╠═fb1f4340-0b89-4393-abf0-1a1c2a6ecdc2
 # ╠═93c50119-b5b3-4ac2-8013-107f0c5218a1
+# ╠═7ff2a50f-3b59-44ce-a26f-9df720f3ca64
 # ╠═c29d6738-e582-4c87-862e-9d26cfc29a9a
 # ╠═74a4da92-c5c1-4e2e-8b8a-5c85b0299341
 # ╠═21773789-5de7-4df3-b945-31f07fd0eb8e

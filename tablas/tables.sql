@@ -1,5 +1,6 @@
 set check_function_bodies = false;
 
+
 drop table if exists aerolinea cascade;
 drop table if exists tripulacion cascade;
 drop table if exists vuelo cascade;
@@ -51,8 +52,7 @@ create table vuelo(
   velocidad float8 not null,
   altitud float8 not null,
   estado varchar(20),
-  primary key(id),
-  constraint codigo_vuelo unique(codigo)
+  primary key(id)
 );
 
 /* Table 'tripulacion_vuelo' */
@@ -69,7 +69,7 @@ create table aerodromo(
   icao char(4) not null,
   iata char(3) not null,
   id_ciudad integer not null,
-  nombre varchar(50) not null,
+  nombre varchar(120) not null,
   posicion point not null,
   primary key(id),
   constraint icao unique(icao),
