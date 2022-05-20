@@ -729,7 +729,24 @@ tickets
 md"""## Exportación de datos"""
 
 # ╔═╡ 7874ff3f-8dee-4a14-b658-7687b42297ed
-paises |> CSV.write("../tablas/paises.csv")
+begin
+	paises |> CSV.write("../tablas/pais.csv")
+	ciudades |> CSV.write("../tablas/ciudad.csv")
+	aerodromos |> CSV.write("../tablas/aerodromo.csv")
+	rutas |> CSV.write("../tablas/ruta.csv")
+	puntos_ruta |> CSV.write("../tablas/punto_ruta.csv")
+	tripulaciones |> CSV.write("../tablas/tripulacion.csv")
+	pilotos |> CSV.write("../tablas/piloto.csv")
+	licencias |> CSV.write("../tablas/licencia.csv")
+	manejas |> CSV.write("../tablas/maneja.csv")
+	aerolineas |> CSV.write("../tablas/aerolinea.csv")
+	aviones |> CSV.write("../tablas/avion.csv")
+	vuelos |> CSV.write("../tablas/vuelo.csv")
+	pasajeros |> CSV.write("../tablas/pasajero.csv")
+	reservas |> CSV.write("../tablas/reserva.csv")
+	tickets |> CSV.write("../tablas/ticket.csv")
+
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """

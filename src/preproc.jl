@@ -42,6 +42,8 @@ function drop_tables()
         drop table if exists ruta cascade;
         drop table if exists pais cascade;
         drop table if exists piloto cascade;
+        drop table if exists maneja cascade;
+        drop table if exists licencia cascade;
         """
     )
 end
