@@ -76,9 +76,9 @@ end
 # ╔═╡ 2900ed94-edf2-49db-9f3f-ade7dbe7f34e
 struct Aerodromo
 	id::Int64
-	nombre::String
 	icao::String
 	iata::String
+	nombre::String
 	posicion::Tuple{Float64, Float64}
 	id_ciudad::Int64
 end
@@ -161,9 +161,9 @@ begin
 			# We don't need to generate IDs like in ciudad or pais
 			# Because they're already given in the table
 			aerodromo.aerodromo_id,
-			aerodromo.nombre,
 			aerodromo.codigo_ICAO,
 			aerodromo.codigo_IATA,
+			aerodromo.nombre,
 			# We use (lat, long) per ISO6709
 			(aerodromo.latitud, aerodromo.longitud),
 			id_ciudad
@@ -189,7 +189,6 @@ end
 
 # ╔═╡ fee7e0dd-2cde-4a21-87ae-b2248ff6efe4
 struct PuntoRuta
-	id::Int64
 	id_ruta::Int64
 	indice::Int64
 	nombre::String
@@ -221,7 +220,6 @@ begin
 		for (indice, point) in enumerate(points)
 			push!(puntos_ruta, PuntoRuta(
 				# Assing sequential IDs
-				length(puntos_ruta) + 1,
 				id_ruta,
 				# Note we use indices starting in 1
 				# Unlike "cardinality" in the given table
@@ -265,17 +263,17 @@ md"""Por ahora nos limitamos a la info de la tripulación, sin vincular los dato
 # ╔═╡ 22617b8c-d588-4f6a-86bd-5e84074e0aef
 struct Tripulacion
 	id::Int64
+	pasaporte::String
 	nombre::String
 	fecha_nacimiento::Date
-	pasaporte::String
 end
 
 # ╔═╡ e8b36ab8-7e37-4480-a577-3012b91f7459
 struct Piloto
 	id::Int64
+	pasaporte::String
 	nombre::String
 	fecha_nacimiento::Date
-	pasaporte::String
 end
 
 # ╔═╡ be0be98f-0b55-4703-a7fb-d1ba82ee0f45
@@ -286,8 +284,8 @@ end
 
 # ╔═╡ 8bce8540-a97a-431a-80c2-40892fbc85a1
 struct Maneja
-	id_vuelo::Int64
 	id_piloto::Int64
+	id_vuelo::Int64
 	id_licencia::Int64
 	rol::String
 end
@@ -326,17 +324,17 @@ ispilot(t) = ! ismissing(t.rol) && t.rol ∈ ["Piloto", "Copiloto"]
 # ╔═╡ 91b131ce-fe5c-4182-80bd-c76ae28a5230
 tripulacion_from_t(t) = Tripulacion(
 	t.trabajador_id,
+	t.pasaporte,
 	t.nombre,
-	t.fecha_nacimiento,
-	t.pasaporte
+	t.fecha_nacimiento
 )
 
 # ╔═╡ eea80bb0-9562-4795-9dda-0751f15a6e73
 piloto_from_t(t) = Piloto(
 	t.trabajador_id,
+	t.pasaporte,	
 	t.nombre,
-	t.fecha_nacimiento,
-	t.pasaporte
+	t.fecha_nacimiento
 )
 
 # ╔═╡ a32074ef-c685-4682-935d-688b15f4ea7b
@@ -347,8 +345,8 @@ licencia_from_t(t) = Licencia(
 
 # ╔═╡ 5624e59b-5360-41f6-be26-f45d340a5513
 maneja_from_t(t) = Maneja(
-	t.vuelo_id,
 	t.trabajador_id,
+	t.vuelo_id,
 	t.licencia_actual_id,
 	t.rol
 )
@@ -434,8 +432,8 @@ md"""Dicho eso, procedemos a procesar los datos:"""
 # ╔═╡ 9a50a7c2-c398-4eac-af89-a9a62a00e873
 struct Aerolinea
 	id::Int64
-	nombre::String
 	codigo::String
+	nombre::String
 end
 
 # ╔═╡ 0f428918-6733-42f7-b540-2e60ed5b4129
@@ -463,10 +461,10 @@ begin
 		push!(aerolineas, Aerolinea(
 			# Generate a sequential ID
 			length(aerolineas) + 1,
-			# Get name from sample
-			sample.nombre_compania,
 			# Use the code we already have
-			codigo
+			codigo,
+			# Get name from sample
+			sample.nombre_compania
 		))
 	end
 end
@@ -495,21 +493,21 @@ md"""### Vuelos"""
 # ╔═╡ 22ce3784-45a6-49bb-a643-5b25397c849c
 struct Avion
 	id::Int64
+	codigo::String
 	nombre::String
 	modelo::String
 	peso::Float64
-	codigo::String
 end
 
 # ╔═╡ 08948bf5-859b-49db-bef9-2aa47314273e
 struct Vuelo
 	id::Int64
+	codigo::String
 	id_aerolinea::Int64
 	id_origen::Int64
 	id_destino::Int64
 	id_avion::Int64
 	id_ruta::Int64
-	codigo::String
 	fecha_salida::DateTime
 	fecha_llegada::DateTime
 	velocidad::Float64
@@ -525,10 +523,10 @@ begin
 		if vuelo.codigo_aeronave ∉ aviones_ya_agregados
 			push!(aviones, Avion(
 				length(aviones) + 1,
+				vuelo.codigo_aeronave,
 				vuelo.nombre_aeronave,
 				vuelo.modelo,
-				vuelo.peso,
-				vuelo.codigo_aeronave
+				vuelo.peso
 			))
 			push!(aviones_ya_agregados, vuelo.codigo_aeronave)
 		end
@@ -542,17 +540,17 @@ function vuelo_from_v(v)
 	
 	return Vuelo(
 		v.vuelo_id,
+		v.codigo_vuelo,
 		id_aerolinea,
 		v.aerodromo_salida_id,
 		v.aerodromo_llegada_id,
 		id_avion,
 		v.ruta_id,
-		v.codigo_vuelo,
 		v.fecha_salida,
 		v.fecha_llegada,
 		v.velocidad,
 		v.altitud,
-		lowercase(strip(v.estado))
+		strip(v.estado)
 	)
 end
 
@@ -672,7 +670,7 @@ begin
 				pasaporte_comprador,
 				nombre_comprador,
 				fecha_nacimiento_comprador,
-				lowercase(strip(nacionalidad_comprador))
+				strip(nacionalidad_comprador)
 			))
 		end
 	end
