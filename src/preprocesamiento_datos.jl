@@ -169,10 +169,8 @@ begin
 			id_ciudad
 		))
 	end
+	aerodromos
 end
-
-# ╔═╡ f6fe5132-7f13-488c-b73b-5be390db57a6
-aerodromos
 
 # ╔═╡ 5230fa1e-7ce7-4c54-9633-5441a410d767
 md"""Verificamos que no hayan aerodromos duplicados:"""
@@ -273,15 +271,12 @@ struct Tripulacion
 end
 
 # ╔═╡ e8b36ab8-7e37-4480-a577-3012b91f7459
-# ╠═╡ disabled = true
-#=╠═╡
 struct Piloto
 	id::Int64
 	nombre::String
 	fecha_nacimiento::Date
 	pasaporte::String
 end
-  ╠═╡ =#
 
 # ╔═╡ be0be98f-0b55-4703-a7fb-d1ba82ee0f45
 struct Licencia
@@ -289,35 +284,107 @@ struct Licencia
 	id_piloto::Int64
 end
 
+# ╔═╡ 8bce8540-a97a-431a-80c2-40892fbc85a1
+struct Maneja
+	id_vuelo::Int64
+	id_piloto::Int64
+	id_licencia::Int64
+	rol::String
+end
+
 # ╔═╡ 4719aca1-3887-4474-8e5a-0260d40d516e
 tabla_trabajadores
 
-# ╔═╡ b3748a10-28fb-4495-8ef8-50a159ff13f3
-begin
-	# No sé como pluralizar esto xd
-	tripulaciones = Vector{Tripulacion}()
-	tripulaciones_ya_agregadas = Vector{Int64}()
-	licencias = Vector{Licencia}()
-	licencias_ya_agregadas = Vector{Int64}()
-	for trabajador in eachrow(tabla_trabajadores)
-		if trabajador.trabajador_id ∉ tripulaciones_ya_agregadas
-			push!(tripulaciones, Tripulacion(
-				trabajador.trabajador_id,
-				trabajador.nombre,
-				trabajador.fecha_nacimiento,
-				trabajador.pasaporte
-			))
-			push!(tripulaciones_ya_agregadas, trabajador.trabajador_id)
-		end
+# ╔═╡ 929b7157-8038-47c2-9669-632561ce7fe1
+md"""Comprobamos que efectivamente las licencia solo estén asociadas a un trabajador:"""
 
-		# Ahora agregamos la licencia
-		licencia = trabajador.licencia_actual_id
-		if (! ismissing(licencia)) && licencia ∉ licencias_ya_agregadas
-			push!(licencias, Licencia(
-				licencia,
-				trabajador.trabajador_id
-			))
-			push!(licencias_ya_agregadas, licencia)
+# ╔═╡ fd893daa-efa0-411e-9903-8ec82392b2d5
+begin
+	licencias_personas = Dict()
+	for trabajador in eachrow(tabla_trabajadores)
+		lic = trabajador.licencia_actual_id
+		if ! ismissing(lic)
+			if lic ∉ keys(licencias_personas)
+				licencias_personas[lic] = Set(trabajador.trabajador_id)
+			else
+				push!(licencias_personas[lic], trabajador.trabajador_id)
+			end
+		end
+	end
+	licencias_personas
+end
+
+# ╔═╡ 7b318091-534b-4173-88bf-d82779a45ed9
+@assert all(p -> length(p.second) == 1, licencias_personas) "Hay licencias asociadas a múltiples trabajadores"
+
+# ╔═╡ 80e237dd-a910-48f4-96eb-bb9a58998220
+md"""Y ahora empezamos a rellenar con las estructuras de datos"""
+
+# ╔═╡ a242d04e-6898-46b6-bfe3-f3635300ab81
+ispilot(t) = ! ismissing(t.rol) && t.rol ∈ ["Piloto", "Copiloto"]
+
+# ╔═╡ 91b131ce-fe5c-4182-80bd-c76ae28a5230
+tripulacion_from_t(t) = Tripulacion(
+	t.trabajador_id,
+	t.nombre,
+	t.fecha_nacimiento,
+	t.pasaporte
+)
+
+# ╔═╡ eea80bb0-9562-4795-9dda-0751f15a6e73
+piloto_from_t(t) = Piloto(
+	t.trabajador_id,
+	t.nombre,
+	t.fecha_nacimiento,
+	t.pasaporte
+)
+
+# ╔═╡ a32074ef-c685-4682-935d-688b15f4ea7b
+licencia_from_t(t) = Licencia(
+	t.licencia_actual_id,
+	t.trabajador_id
+)
+
+# ╔═╡ 5624e59b-5360-41f6-be26-f45d340a5513
+maneja_from_t(t) = Maneja(
+	t.vuelo_id,
+	t.trabajador_id,
+	t.licencia_actual_id,
+	t.rol
+)
+
+# ╔═╡ f6ed47b5-afae-443f-a00f-6874ce4f03d3
+exists(f, c) = ! isnothing(findfirst(f, c))
+
+# ╔═╡ a18a5446-c3e6-4bf5-b9fa-29473e75d53f
+id_exists(c, id) = exists(x -> x.id == id, c)
+
+# ╔═╡ cc58b6f5-c3df-4d54-82c4-b688841fdb24
+begin
+	tripulaciones = Tripulacion[]
+	pilotos = Piloto[]
+	licencias = Licencia[]
+	manejas = Maneja[]
+
+	for t in eachrow(tabla_trabajadores)
+		if ! ispilot(t)
+			# Flight crew
+			if ! id_exists(tripulaciones, t.trabajador_id)
+				push!(tripulaciones, tripulacion_from_t(t))
+			end
+		else
+			# Pilots and copilots
+			if ! id_exists(pilotos, t.trabajador_id)
+				push!(pilotos, piloto_from_t(t))
+			end
+			if ! ismissing(t.licencia_actual_id)
+				# Licenses
+				if ! id_exists(licencias, t.licencia_actual_id)
+					push!(licencias, licencia_from_t(t))
+				end
+				# Maneja
+				push!(manejas, maneja_from_t(t))
+			end
 		end
 	end
 end
@@ -325,8 +392,23 @@ end
 # ╔═╡ cc26848c-1e5e-4af7-8db8-c9b6a7939437
 tripulaciones
 
-# ╔═╡ 41212a6a-dd84-46ef-b840-5dbeed851e4b
+# ╔═╡ 746b8029-b76f-44c1-a075-8dea9a4b58a0
 licencias
+
+# ╔═╡ 785849a5-6c29-4e6c-b077-64f06e57af24
+manejas
+
+# ╔═╡ 3701f6e7-8d36-4022-92e6-b75e62436c29
+length(tripulaciones)
+
+# ╔═╡ 41212a6a-dd84-46ef-b840-5dbeed851e4b
+length(licencias)
+
+# ╔═╡ 582878e1-2298-44b8-b836-3738671ec06d
+length(manejas)
+
+# ╔═╡ 8a7eee3a-78aa-40ca-aca6-5b6d63a8e045
+md"""Revisamos que no hayan duplicaciones:"""
 
 # ╔═╡ 4b2ba701-7f42-4b10-92f5-2e40bdab315d
 @assert unique(tripulaciones) == tripulaciones "Las entradas de trip. deberían ser únicas"
@@ -402,10 +484,10 @@ md"""Dado que esta si tiene vuelos y un código, asumiremos que constituye una a
 md"""Verificamos que no se repitan las aerolineas:"""
 
 # ╔═╡ 6f06eac0-c8a2-458a-8573-d6718ed7db15
-nombre_aerolineas = [aerolinea.nombre for aerolinea in aerolineas]
+codigos_aerolineas = [aerolinea.codigo for aerolinea in aerolineas]
 
 # ╔═╡ 600c127c-f395-4fef-8a7e-9464033701da
-@assert unique(nombre_aerolineas) == nombre_aerolineas
+@assert unique(codigos_aerolineas) == codigos_aerolineas
 
 # ╔═╡ 71cbde30-d2ae-4729-a499-69b842c7c138
 md"""### Vuelos"""
@@ -427,8 +509,6 @@ struct Vuelo
 	id_destino::Int64
 	id_avion::Int64
 	id_ruta::Int64
-	id_piloto::Int64
-	id_copiloto::Int64
 	codigo::String
 	fecha_salida::DateTime
 	fecha_llegada::DateTime
@@ -441,7 +521,6 @@ end
 begin
 	aviones = Vector{Avion}()
 	aviones_ya_agregados = Vector{String}()
-	vuelos = Vector{Vuelo}()
 	for vuelo in eachrow(tabla_vuelos)
 		if vuelo.codigo_aeronave ∉ aviones_ya_agregados
 			push!(aviones, Avion(
@@ -456,8 +535,201 @@ begin
 	end
 end
 
-# ╔═╡ 079a5281-ae56-4d93-9c2a-98954d877075
-aviones
+# ╔═╡ c29d6738-e582-4c87-862e-9d26cfc29a9a
+function vuelo_from_v(v)
+	id_aerolinea = findfirst(a -> a.codigo == v.codigo_compania, aerolineas)
+	id_avion = findfirst(a -> a.codigo == v.codigo_aeronave, aviones)
+	
+	return Vuelo(
+		v.vuelo_id,
+		id_aerolinea,
+		v.aerodromo_salida_id,
+		v.aerodromo_llegada_id,
+		id_avion,
+		v.ruta_id,
+		v.codigo_vuelo,
+		v.fecha_salida,
+		v.fecha_llegada,
+		v.velocidad,
+		v.altitud,
+		lowercase(strip(v.estado))
+	)
+end
+
+# ╔═╡ 74a4da92-c5c1-4e2e-8b8a-5c85b0299341
+begin
+	vuelos = Vector{Vuelo}()
+	for v in eachrow(tabla_vuelos)
+		push!(vuelos, vuelo_from_v(v))
+	end
+end
+
+# ╔═╡ 21773789-5de7-4df3-b945-31f07fd0eb8e
+vuelos
+
+# ╔═╡ e843330f-f879-45f6-b1cd-3aeb4ca2518d
+md"""### Reservas"""
+
+# ╔═╡ 2a5851d0-cf78-4b1a-86d3-3a1859fcfe42
+struct Pasajero
+	id::Int64
+	pasaporte::Union{String, Missing}
+	nombre::String
+	fecha_nacimiento::Date
+	nacionalidad::String
+end
+
+# ╔═╡ f5f15f65-9cb1-46ec-b917-54a5e4d65db7
+struct Reserva
+	id::Int64
+	codigo::String
+	id_reservante::Int64
+end
+
+# ╔═╡ 68097a42-8513-4cd9-8159-1e3469294e05
+struct Ticket
+	id::Int64
+	id_vuelo::Int64
+	id_pasajero::Int64
+	id_reserva::Int64
+	asiento::Int64
+	clase::String
+	comida_y_maleta::Bool
+end
+
+# ╔═╡ 23a11ee0-8164-4143-a4ce-1d798c6fc87e
+pasajero_from_t(t, id) = Pasajero(
+	id,
+	t.pasaporte_pasajero,
+	t.nombre_pasajero,
+	t.fecha_nacimiento_pasajero,
+	lowercase(strip(t.nacionalidad_pasajero))
+)
+
+# ╔═╡ bc8a7eda-df0c-49f3-ac52-cec16f31771b
+function find_pasajero(pasajeros, t)
+	if ! ismissing(t.pasaporte_pasajero)
+		for pasajero in pasajeros
+			if pasajero.pasaporte == t.pasaporte_pasajero
+				return pasajero
+			end
+		end
+	elseif (! ismissing(t.nombre_pasajero)) && (! ismissing(t.fecha_nacimiento))
+		for pasajero in pasajeros
+			if (
+				pasajero.nombre == t.nombre_pasajero &&
+				pasajero.fecha_nacimiento == t.fecha_nacimiento_pasajero
+			)
+				return pasajero
+			end
+		end
+	else
+		return missing
+	end
+	return nothing
+end
+
+# ╔═╡ 66fd248c-1439-4ca9-9a35-f71a92e63760
+function find_reservante(pasajeros, t)
+	if ! ismissing(t.pasaporte_comprador)
+		for pasajero in pasajeros
+			if pasajero.pasaporte == t.pasaporte_comprador
+				return pasajero
+			end
+		end
+	else
+		for pasajero in pasajeros
+			if (
+				pasajero.nombre == t.nombre_comprador &&
+				pasajero.fecha_nacimiento == t.fecha_nacimiento_comprador
+			)
+				return pasajero
+			end
+		end
+
+	end
+	return nothing
+end
+
+# ╔═╡ 2e7d7d75-9ec8-474a-bb59-5b422e43c418
+begin
+	pasajeros = Pasajero[]
+	reservas = Reserva[]
+	tickets = Ticket[]
+	
+	for t in eachrow(tabla_reservas)
+		# Pasajero
+		pasajero = find_pasajero(pasajeros, t)
+		reserva_unica = ismissing(pasajero)
+		if reserva_unica
+			pasajero = find_reservante(pasajeros, t)
+		end
+		if isnothing(pasajero) && (! reserva_unica)
+			push!(pasajeros, pasajero_from_t(t, length(pasajeros) + 1))
+		elseif isnothing(pasajero)
+			push!(pasajeros, Pasajero(
+				length(pasajeros) + 1,
+				pasaporte_comprador,
+				nombre_comprador,
+				fecha_nacimiento_comprador,
+				lowercase(strip(nacionalidad_comprador))
+			))
+		end
+	end
+
+	for t in eachrow(tabla_reservas)
+		# Reserva
+		reservante = find_reservante(pasajeros, t)
+		if ! id_exists(reservas, t.reserva_id)
+			push!(reservas, Reserva(
+				t.reserva_id,
+				t.codigo_reserva,
+				reservante.id
+			))
+		end
+		# Ticket
+		pasajero = find_pasajero(pasajeros, t)
+		reserva_unica = ismissing(pasajero)
+		if reserva_unica
+			pasajero = find_reservante(pasajeros, t)
+		end
+		if ! id_exists(tickets, t.numero_ticket)
+			push!(tickets, Ticket(
+				t.numero_ticket,
+				t.vuelo_id,
+				pasajero.id,
+				t.reserva_id,
+				t.numero_asiento,
+				t.clase,
+				t.comida_y_maleta == "VERDADERO"
+			))
+		end
+	end
+end
+
+# ╔═╡ 0bacda4a-3395-4d35-8e4d-92bc3ca75b97
+pasajeros
+
+# ╔═╡ 80370f25-91fe-4cb6-9f85-e6e57064fe11
+@assert unique(pasajeros) == pasajeros
+
+# ╔═╡ 348fbb30-38d5-4f9a-a6c0-27b6e4bdf6ea
+reservas
+
+# ╔═╡ c4341df9-7387-4d98-9e4c-5c9c9a415579
+@assert unique(reservas) == reservas
+
+# ╔═╡ 47febd2f-cdda-4222-b74e-8c779d6e092e
+tickets
+
+# ╔═╡ 2dc50016-b862-4113-af43-d03e7bd7c157
+@assert unique(tickets) == tickets
+
+# ╔═╡ 9d28ee69-cfcd-4692-8a08-09f124f2c735
+md"""## Exportación de datos"""
+
+# ╔═╡ 7874ff3f-8dee-4a14-b658-7687b42297ed
+paises |> CSV.write("../tablas/paises.csv")
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -884,10 +1156,9 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═d073c943-4e4e-4bb3-b667-806bc1147d21
 # ╟─32fc00bd-63f8-4c41-a9f4-de79f95651b3
 # ╠═42c80dd1-011f-49f5-a2e8-da1fd1042724
-# ╠═f6fe5132-7f13-488c-b73b-5be390db57a6
 # ╟─5230fa1e-7ce7-4c54-9633-5441a410d767
 # ╠═ae712ff8-6e16-4487-9fb7-9d105ef05dd9
-# ╠═ca9eceb6-f46a-4389-a0a3-d0580242a537
+# ╟─ca9eceb6-f46a-4389-a0a3-d0580242a537
 # ╠═21c612b7-d964-42ff-b449-d9b777fcb099
 # ╠═fee7e0dd-2cde-4a21-87ae-b2248ff6efe4
 # ╠═c64c4d82-2472-42b3-bffa-e5f407c75683
@@ -904,13 +1175,30 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═22617b8c-d588-4f6a-86bd-5e84074e0aef
 # ╠═e8b36ab8-7e37-4480-a577-3012b91f7459
 # ╠═be0be98f-0b55-4703-a7fb-d1ba82ee0f45
+# ╠═8bce8540-a97a-431a-80c2-40892fbc85a1
 # ╠═4719aca1-3887-4474-8e5a-0260d40d516e
-# ╠═b3748a10-28fb-4495-8ef8-50a159ff13f3
+# ╟─929b7157-8038-47c2-9669-632561ce7fe1
+# ╠═fd893daa-efa0-411e-9903-8ec82392b2d5
+# ╠═7b318091-534b-4173-88bf-d82779a45ed9
+# ╟─80e237dd-a910-48f4-96eb-bb9a58998220
+# ╟─a242d04e-6898-46b6-bfe3-f3635300ab81
+# ╟─91b131ce-fe5c-4182-80bd-c76ae28a5230
+# ╟─eea80bb0-9562-4795-9dda-0751f15a6e73
+# ╟─a32074ef-c685-4682-935d-688b15f4ea7b
+# ╟─5624e59b-5360-41f6-be26-f45d340a5513
+# ╟─f6ed47b5-afae-443f-a00f-6874ce4f03d3
+# ╟─a18a5446-c3e6-4bf5-b9fa-29473e75d53f
+# ╠═cc58b6f5-c3df-4d54-82c4-b688841fdb24
 # ╠═cc26848c-1e5e-4af7-8db8-c9b6a7939437
+# ╠═746b8029-b76f-44c1-a075-8dea9a4b58a0
+# ╠═785849a5-6c29-4e6c-b077-64f06e57af24
+# ╠═3701f6e7-8d36-4022-92e6-b75e62436c29
 # ╠═41212a6a-dd84-46ef-b840-5dbeed851e4b
+# ╠═582878e1-2298-44b8-b836-3738671ec06d
+# ╟─8a7eee3a-78aa-40ca-aca6-5b6d63a8e045
 # ╠═4b2ba701-7f42-4b10-92f5-2e40bdab315d
 # ╠═0977b4ed-845f-4501-9bde-05d1c7ff0602
-# ╠═845361e9-c256-40ba-a7ed-a75ddf163b02
+# ╟─845361e9-c256-40ba-a7ed-a75ddf163b02
 # ╟─d5c42dc3-1729-4f03-a7ca-10cefc617382
 # ╟─2e6cb744-a504-4203-8c62-839b2d3864b2
 # ╠═220f157d-1309-4f29-8bed-8646504f3d72
@@ -927,6 +1215,24 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═22ce3784-45a6-49bb-a643-5b25397c849c
 # ╠═08948bf5-859b-49db-bef9-2aa47314273e
 # ╠═93c50119-b5b3-4ac2-8013-107f0c5218a1
-# ╠═079a5281-ae56-4d93-9c2a-98954d877075
+# ╠═c29d6738-e582-4c87-862e-9d26cfc29a9a
+# ╠═74a4da92-c5c1-4e2e-8b8a-5c85b0299341
+# ╠═21773789-5de7-4df3-b945-31f07fd0eb8e
+# ╟─e843330f-f879-45f6-b1cd-3aeb4ca2518d
+# ╠═2a5851d0-cf78-4b1a-86d3-3a1859fcfe42
+# ╠═f5f15f65-9cb1-46ec-b917-54a5e4d65db7
+# ╠═68097a42-8513-4cd9-8159-1e3469294e05
+# ╟─23a11ee0-8164-4143-a4ce-1d798c6fc87e
+# ╟─bc8a7eda-df0c-49f3-ac52-cec16f31771b
+# ╟─66fd248c-1439-4ca9-9a35-f71a92e63760
+# ╠═2e7d7d75-9ec8-474a-bb59-5b422e43c418
+# ╠═0bacda4a-3395-4d35-8e4d-92bc3ca75b97
+# ╠═80370f25-91fe-4cb6-9f85-e6e57064fe11
+# ╠═348fbb30-38d5-4f9a-a6c0-27b6e4bdf6ea
+# ╠═c4341df9-7387-4d98-9e4c-5c9c9a415579
+# ╠═47febd2f-cdda-4222-b74e-8c779d6e092e
+# ╠═2dc50016-b862-4113-af43-d03e7bd7c157
+# ╟─9d28ee69-cfcd-4692-8a08-09f124f2c735
+# ╠═7874ff3f-8dee-4a14-b658-7687b42297ed
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
