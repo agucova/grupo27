@@ -565,7 +565,6 @@ id,id_vuelo,id_pasajero,id_reserva,asiento,clase,comida_y_maleta
 1217,110,8,3037,6,Primera clase,false
 9749,130,81,3421,18,Economica,false
 8276,99,58,1991,30,Ejecutiva,true
-1675,130,29,4922,22,Economica,true
 7853,102,8,3668,15,Economica,true
 3741,112,76,405,8,Economica,false
 3945,106,20,221,19,Economica,false
@@ -720,7 +719,6 @@ id,id_vuelo,id_pasajero,id_reserva,asiento,clase,comida_y_maleta
 4776,100,41,4263,8,Economica,false
 6996,124,17,3366,2,Economica,false
 1090,105,35,2133,22,Ejecutiva,true
-5203,98,62,2633,9,Economica,false
 9059,101,41,1051,5,Economica,true
 1968,101,34,4265,21,Ejecutiva,false
 7107,98,75,1975,20,Economica,false
@@ -756,7 +754,6 @@ id,id_vuelo,id_pasajero,id_reserva,asiento,clase,comida_y_maleta
 8296,119,72,2414,16,Economica,true
 6576,131,22,1726,2,Economica,true
 8371,132,27,2578,23,Economica,true
-4956,125,56,736,11,Economica,false
 6869,122,84,1515,27,Economica,false
 7558,108,85,3772,30,Economica,false
 4985,99,21,1016,6,Primera clase,false

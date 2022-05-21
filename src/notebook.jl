@@ -821,24 +821,18 @@ begin
 		pasajero = find_pasajero(pasajeros, t)
 		reserva_unica = ismissing(pasajero)
 		if reserva_unica
-			pasajero = find_reservante(pasajeros, t)
+			# Nos saltamos entradas defectuosas
+			continue
 		end
-		if isnothing(pasajero) && (! reserva_unica)
+		if isnothing(pasajero)
 			push!(pasajeros, pasajero_from_t(t, length(pasajeros) + 1))
-		elseif isnothing(pasajero)
-			push!(pasajeros, Pasajero(
-				length(pasajeros) + 1,
-				pasaporte_comprador,
-				nombre_comprador,
-				fecha_nacimiento_comprador,
-				strip(nacionalidad_comprador)
-			))
 		end
 	end
 
 	for t in eachrow(tabla_reservas)
 		# Reserva
 		reservante = find_reservante(pasajeros, t)
+		# TODO: Deberíamos incluir reservas defectuosas?
 		if ! id_exists(reservas, t.reserva_id)
 			push!(reservas, Reserva(
 				t.reserva_id,
@@ -850,7 +844,8 @@ begin
 		pasajero = find_pasajero(pasajeros, t)
 		reserva_unica = ismissing(pasajero)
 		if reserva_unica
-			pasajero = find_reservante(pasajeros, t)
+			# Nos saltamos tickets defectuosos intencionalmente
+			continue
 		end
 		if ! id_exists(tickets, t.numero_ticket)
 			push!(tickets, Ticket(
@@ -1430,7 +1425,7 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═f5f15f65-9cb1-46ec-b917-54a5e4d65db7
 # ╠═68097a42-8513-4cd9-8159-1e3469294e05
 # ╟─23a11ee0-8164-4143-a4ce-1d798c6fc87e
-# ╟─bc8a7eda-df0c-49f3-ac52-cec16f31771b
+# ╠═bc8a7eda-df0c-49f3-ac52-cec16f31771b
 # ╟─66fd248c-1439-4ca9-9a35-f71a92e63760
 # ╠═2e7d7d75-9ec8-474a-bb59-5b422e43c418
 # ╠═0bacda4a-3395-4d35-8e4d-92bc3ca75b97
