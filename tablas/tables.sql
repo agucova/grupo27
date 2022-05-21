@@ -28,8 +28,8 @@ create table aerolinea(
   constraint codigo_aerolinea unique(codigo)
 );
 
-/* Table 'tripulacion' */
-create table tripulacion(
+/* Table 'trabajador' */
+create table trabajador(
   id serial not null,
   pasaporte varchar(40) not null,
   nombre varchar(120) not null,
@@ -41,12 +41,12 @@ create table tripulacion(
 /* Table 'vuelo' */
 create table vuelo(
   id serial not null,
-  codigo varchar(20) not null,
   id_aerolinea integer not null,
   id_origen integer not null,
   id_destino integer not null,
   id_avion integer not null,
   id_ruta integer not null,
+  codigo varchar(20) not null,
   fecha_salida timestamp with time zone not null,
   fecha_llegada timestamp with time zone not null,
   velocidad float8 not null,
@@ -55,12 +55,10 @@ create table vuelo(
   primary key(id)
 );
 
-/* Table 'tripulacion_vuelo' */
-create table tripulacion_vuelo(
-  id_tripulante integer not null,
-  id_vuelo integer not null,
-  rol varchar(40) not null,
-  primary key(id_tripulante, id_vuelo)
+/* Table 'tripulante_vuelo' */
+create table tripulante_vuelo(
+id_vuelo integer not null, id_tripulante integer not null,
+  primary key(id_vuelo, id_tripulante)
 );
 
 /* Table 'aerodromo' */
@@ -80,7 +78,7 @@ create table aerodromo(
 create table ciudad(
   id integer not null,
   id_pais integer not null,
-  nombre varchar(60),
+  nombre varchar(60) not null,
   primary key(id)
 );
 
@@ -96,7 +94,7 @@ create table punto_ruta(
 /* Table 'pasajero' */
 create table pasajero(
   id serial not null,
-  pasaporte varchar(40),
+  pasaporte varchar(40) not null,
   nombre varchar(50) not null,
   fecha_nacimiento date not null,
   nacionalidad varchar(50) not null,
@@ -128,18 +126,16 @@ create table ticket(
 /* Table 'costo' */
 create table costo(
   id_ruta integer not null,
-  id_avion integer not null,
-  costo numeric,
-  primary key(id_ruta, id_avion)
+  id_modelo integer not null,
+  monto numeric not null,
+  primary key(id_ruta, id_modelo)
 );
 
 /* Table 'avion' */
 create table avion(
   id serial not null,
   codigo char(7) not null,
-  nombre varchar(50) not null,
-  modelo varchar(50) not null,
-  peso float8 not null,
+  id_modelo integer not null,
   primary key(id),
   constraint "Codigo" unique(codigo)
 );
@@ -153,35 +149,42 @@ create table pais
   (id serial not null, nombre varchar(80) not null, primary key(id));
 
 /* Table 'piloto' */
-create table piloto(
-  id serial not null,
-  pasaporte varchar(40) not null,
-  nombre varchar(120) not null,
-  fecha_nacimiento date not null,
-  primary key(id),
-  constraint pasaporte_piloto unique(pasaporte)
-);
+create table piloto(id_trabajador integer not null, primary key(id_trabajador));
 
 /* Table 'licencia' */
 create table licencia
   (id integer not null, id_piloto integer not null, primary key(id));
 
-/* Table 'maneja' */
-create table maneja(
-  id_piloto integer not null,
+/* Table 'piloto_vuelo' */
+create table piloto_vuelo(
   id_vuelo integer not null,
-  id_licencia integer,
+  id_piloto integer not null,
+  id_licencia integer not null,
   rol char(30) not null,
   primary key(id_vuelo, id_piloto)
 );
 
-/* Relation 'tripulacion_tripulacionvuelo' */
-alter table tripulacion_vuelo
-  add constraint tripulacion_tripulacionvuelo
-    foreign key (id_tripulante) references tripulacion (id);
+/* Table 'modelo' */
+create table modelo(
+  id integer not null,
+  peso float8(120) not null,
+  codigo varchar(40) not null,
+  nombre varchar(100) not null,
+  primary key(id)
+);
+
+/* Table 'trabajador_aerolinea' */
+create table trabajador_aerolinea(
+id_trabajador integer not null, id_aerolinea integer not null,
+  primary key(id_trabajador, id_aerolinea)
+);
+
+/* Table 'tripulante' */
+create table tripulante
+  (id_trabajador integer not null, rol varchar(50), primary key(id_trabajador));
 
 /* Relation 'vuelo_tripulacionvuelo' */
-alter table tripulacion_vuelo
+alter table tripulante_vuelo
   add constraint vuelo_tripulacionvuelo
     foreign key (id_vuelo) references vuelo (id);
 
@@ -203,10 +206,6 @@ alter table ticket
 alter table reserva
   add constraint pasajero_reserva
     foreign key (id_reservante) references pasajero (id);
-
-/* Relation 'avion_costo' */
-alter table costo
-  add constraint avion_costo foreign key (id_avion) references avion (id);
 
 /* Relation 'origen_vuelo' */
 alter table vuelo
@@ -250,17 +249,52 @@ alter table ciudad
 
 /* Relation 'piloto_licencia' */
 alter table licencia
-  add constraint piloto_licencia foreign key (id_piloto) references piloto (id);
+  add constraint piloto_licencia
+    foreign key (id_piloto) references piloto (id_trabajador);
 
 /* Relation 'vuelo_maneja' */
-alter table maneja
+alter table piloto_vuelo
   add constraint vuelo_maneja foreign key (id_vuelo) references vuelo (id);
 
 /* Relation 'piloto_maneja' */
-alter table maneja
-  add constraint piloto_maneja foreign key (id_piloto) references piloto (id);
+alter table piloto_vuelo
+  add constraint piloto_maneja
+    foreign key (id_piloto) references piloto (id_trabajador);
 
 /* Relation 'licencia_maneja' */
-alter table maneja
+alter table piloto_vuelo
   add constraint licencia_maneja
     foreign key (id_licencia) references licencia (id);
+
+/* Relation 'modelo_avion' */
+alter table avion
+  add constraint modelo_avion foreign key (id_modelo) references modelo (id);
+
+/* Relation 'modelo_costo' */
+alter table costo
+  add constraint modelo_costo foreign key (id_modelo) references modelo (id);
+
+/* Relation 'trabajador_trabajador_aerolinea' */
+alter table trabajador_aerolinea
+  add constraint trabajador_trabajador_aerolinea
+    foreign key (id_trabajador) references trabajador (id);
+
+/* Relation 'aerolinea_trabajador_aerolinea' */
+alter table trabajador_aerolinea
+  add constraint aerolinea_trabajador_aerolinea
+    foreign key (id_aerolinea) references aerolinea (id);
+
+/* Relation 'trabajador_piloto' */
+alter table piloto
+  add constraint trabajador_piloto
+    foreign key (id_trabajador) references trabajador (id);
+
+/* Relation 'tripulante_tripulante_vuelo' */
+alter table tripulante_vuelo
+  add constraint tripulante_tripulante_vuelo
+    foreign key (id_tripulante) references tripulante (id_trabajador);
+
+/* Relation 'trabajador_tripulante' */
+alter table tripulante
+  add constraint trabajador_tripulante
+    foreign key (id_trabajador) references trabajador (id);
