@@ -108,12 +108,12 @@ paises_ciudades
 begin
 	paises = Vector{Pais}()
 	ciudades = Vector{Ciudad}()
-	
+
 	for (id_pais, (pais, ciudades_en_pais)) in enumerate(pairs(paises_ciudades))
 		# Add the country
 		push!(paises, Pais(
 			id_pais,
-			pais		
+			pais
 		))
 		for (id_ciudad, ciudad) in enumerate(ciudades_en_pais)
 			push!(ciudades, Ciudad(
@@ -504,13 +504,13 @@ begin
 	trabajador_aerolineas = TrabajadorAerolinea[]
 	for t in eachrow(tabla_trabajadores)
 		ismissing(t.rol) && continue
-		
+
 		aerolinea = fetchfirst(a -> a.codigo == t.codigo_compania, aerolineas)
 		if (
 			ispilot(t) || iscrew(t)) &&
 			! exists(
 				ta -> ta.id_trabajador == t.trabajador_id && ta.id_aerolinea == aerolinea.id, trabajador_aerolineas
-			)		
+			)
 			push!(trabajador_aerolineas, TrabajadorAerolinea(
 				t.trabajador_id,
 				aerolinea.id
@@ -599,7 +599,7 @@ begin
 			)
 			push!(modelos, modelo)
 		end
-		
+
 		if ! codigo_exists(aviones, v.codigo_aeronave)
 			push!(aviones, Avion(
 				length(aviones) + 1,
@@ -626,7 +626,7 @@ aviones
 function vuelo_from_v(v)
 	id_aerolinea = findfirst(a -> a.codigo == v.codigo_compania, aerolineas)
 	id_avion = findfirst(a -> a.codigo == v.codigo_aeronave, aviones)
-	
+
 	return Vuelo(
 		v.vuelo_id,
 		id_aerolinea,
@@ -654,7 +654,7 @@ begin
 		# Costo
 		avion = fetchfirst(a -> a.id == vuelo.id_avion, aviones)
 		isnothing(avion) && throw(error("Couldn't find plane"))
-		
+
 		costo = fetchfirst(
 			c -> c.id_ruta == vuelo.id_ruta &&
 			c.id_modelo == avion.id_modelo,
@@ -684,12 +684,12 @@ costos
 
 # ╔═╡ e1cd7e84-f62c-42e1-b18c-49ff9ce8368a
 begin
-	piloto_vuelos = PilotoVuelo[]	
+	piloto_vuelos = PilotoVuelo[]
 	tripulante_vuelos = TripulanteVuelo[]
 
 	for t in eachrow(tabla_trabajadores)
 		ismissing(t.rol) && continue
-		
+
 		vuelo = fetchfirst(v -> v.id == t.vuelo_id, vuelos)
 		aerolinea = fetchfirst(a -> a.codigo == t.codigo_compania, aerolineas)
 		(isnothing(vuelo) || isnothing(aerolinea)) && throw(error("Lookup error."))
@@ -815,7 +815,7 @@ begin
 	pasajeros = Pasajero[]
 	reservas = Reserva[]
 	tickets = Ticket[]
-	
+
 	for t in eachrow(tabla_reservas)
 		# Pasajero
 		pasajero = find_pasajero(pasajeros, t)
@@ -889,29 +889,29 @@ md"""## Exportación de datos"""
 
 # ╔═╡ 7874ff3f-8dee-4a14-b658-7687b42297ed
 begin
-	paises |> CSV.write("../tablas/pais.csv")
-	ciudades |> CSV.write("../tablas/ciudad.csv")
-	aerodromos |> CSV.write("../tablas/aerodromo.csv")
-	rutas |> CSV.write("../tablas/ruta.csv")
-	puntos_ruta |> CSV.write("../tablas/punto_ruta.csv")
-	
-	trabajadores |> CSV.write("../tablas/trabajadores.csv")
-	tripulantes |> CSV.write("../tablas/tripulantes.csv")
-	tripulante_vuelos |> CSV.write("../tablas/tripulante_vuelo.csv")
-	pilotos |> CSV.write("../tablas/piloto.csv")
-	piloto_vuelos |> CSV.write("../tablas/piloto_vuelo.csv")
-	licencias |> CSV.write("../tablas/licencia.csv")
-	
-	aerolineas |> CSV.write("../tablas/aerolinea.csv")
-	trabajador_aerolineas |> CSV.write("../tablas/trabajador_aerolinea.csv")
-	
-	aviones |> CSV.write("../tablas/avion.csv")
-	vuelos |> CSV.write("../tablas/vuelo.csv")
-	costos |> CSV.write("../tablas/costo.csv")
-	pasajeros |> CSV.write("../tablas/pasajero.csv")
-	reservas |> CSV.write("../tablas/reserva.csv")
-	tickets |> CSV.write("../tablas/ticket.csv")
-	
+	paises |> CSV.write("../tables/pais.csv")
+	ciudades |> CSV.write("../tables/ciudad.csv")
+	aerodromos |> CSV.write("../tables/aerodromo.csv")
+	rutas |> CSV.write("../tables/ruta.csv")
+	puntos_ruta |> CSV.write("../tables/punto_ruta.csv")
+
+	trabajadores |> CSV.write("../tables/trabajadores.csv")
+	tripulantes |> CSV.write("../tables/tripulantes.csv")
+	tripulante_vuelos |> CSV.write("../tables/tripulante_vuelo.csv")
+	pilotos |> CSV.write("../tables/piloto.csv")
+	piloto_vuelos |> CSV.write("../tables/piloto_vuelo.csv")
+	licencias |> CSV.write("../tables/licencia.csv")
+
+	aerolineas |> CSV.write("../tables/aerolinea.csv")
+	trabajador_aerolineas |> CSV.write("../tables/trabajador_aerolinea.csv")
+
+	aviones |> CSV.write("../tables/avion.csv")
+	vuelos |> CSV.write("../tables/vuelo.csv")
+	costos |> CSV.write("../tables/costo.csv")
+	pasajeros |> CSV.write("../tables/pasajero.csv")
+	reservas |> CSV.write("../tables/reserva.csv")
+	tickets |> CSV.write("../tables/ticket.csv")
+
 	@info "Exportación finalizada 😄"
 end
 
