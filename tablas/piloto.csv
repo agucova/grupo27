@@ -1,20 +1,20 @@
-id,pasaporte,nombre,fecha_nacimiento
-38,O88716397,Gabriel Palmer,1981-08-18
-24,B96464671,Eric Phelps,1994-10-01
-8,J22810925,Jason Edwards,1975-02-09
-15,S26547035,Matthew Walsh,1993-09-20
-59,A85793465,Jacob Duran,1988-02-25
-31,L01109034,Linda Warren,1975-03-13
-25,E10934506,Danny Pratt,1998-10-31
-17,I74549867,Laura Ward,1981-01-23
-10,A35692355,Alex Deleon,1979-10-03
-0,L89163667,Jessica Harvey,1996-04-08
-34,C02131672,Ronald Monroe,1984-09-12
-37,O98651462,Joe Cabrera,1994-08-13
-54,Q49180524,Gene Obrien,1999-07-02
-21,H50641909,Kimberly Brown,1999-09-02
-23,V51246373,Latasha Nelson,1986-05-09
-7,Q46419538,Curtis Gutierrez,1974-03-14
-41,G16561693,Jeffrey Roberts,1971-12-02
-9,F40422038,John Ross,1979-03-16
-29,H06267236,Mr. James Baxter,1982-05-03
+id_trabajador
+38
+24
+8
+15
+59
+31
+25
+17
+10
+0
+34
+37
+54
+21
+23
+7
+41
+9
+29
