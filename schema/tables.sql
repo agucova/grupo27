@@ -1,6 +1,5 @@
 set check_function_bodies = false;
 
-
 drop table if exists aerolinea cascade;
 drop table if exists tripulacion cascade;
 drop table if exists vuelo cascade;
@@ -18,6 +17,13 @@ drop table if exists pais cascade;
 drop table if exists piloto cascade;
 drop table if exists maneja cascade;
 drop table if exists licencia cascade;
+drop table if exists trabajador cascade;
+drop table if exists tripulante cascade;
+drop table if exists piloto cascade;
+drop table if exists tripulante_vuelo cascade;
+drop table if exists piloto_vuelo cascade;
+drop table if exists trabajador_aerolinea cascade;
+drop table if exists modelo cascade;
 
 /* Table 'aerolinea' */
 create table aerolinea(
@@ -55,10 +61,12 @@ create table vuelo(
   primary key(id)
 );
 
-/* Table 'tripulante_vuelo' */
-create table tripulante_vuelo(
-id_vuelo integer not null, id_tripulante integer not null,
-  primary key(id_vuelo, id_tripulante)
+/* Table 'trabajador_vuelo' */
+create table trabajador_vuelo(
+  id_vuelo integer not null,
+  id_trabajador integer not null,
+  rol varchar(100) not null,
+  primary key(id_vuelo, id_trabajador)
 );
 
 /* Table 'aerodromo' */
@@ -148,26 +156,14 @@ create table ruta
 create table pais
   (id serial not null, nombre varchar(80) not null, primary key(id));
 
-/* Table 'piloto' */
-create table piloto(id_trabajador integer not null, primary key(id_trabajador));
-
 /* Table 'licencia' */
 create table licencia
-  (id integer not null, id_piloto integer not null, primary key(id));
-
-/* Table 'piloto_vuelo' */
-create table piloto_vuelo(
-  id_vuelo integer not null,
-  id_piloto integer not null,
-  id_licencia integer not null,
-  rol char(30) not null,
-  primary key(id_vuelo, id_piloto)
-);
+  (id integer not null, piloto_id integer not null, primary key(id));
 
 /* Table 'modelo' */
 create table modelo(
   id integer not null,
-  peso float8(120) not null,
+  peso float8 not null,
   codigo varchar(40) not null,
   nombre varchar(100) not null,
   primary key(id)
@@ -179,13 +175,9 @@ id_trabajador integer not null, id_aerolinea integer not null,
   primary key(id_trabajador, id_aerolinea)
 );
 
-/* Table 'tripulante' */
-create table tripulante
-  (id_trabajador integer not null, rol varchar(50), primary key(id_trabajador));
-
-/* Relation 'vuelo_tripulacionvuelo' */
-alter table tripulante_vuelo
-  add constraint vuelo_tripulacionvuelo
+/* Relation 'vuelo_tripulante_vuelo' */
+alter table trabajador_vuelo
+  add constraint vuelo_tripulante_vuelo
     foreign key (id_vuelo) references vuelo (id);
 
 /* Relation 'ciudad_aerodromo' */
@@ -247,25 +239,6 @@ alter table ticket
 alter table ciudad
   add constraint pais_ciudad foreign key (id_pais) references pais (id);
 
-/* Relation 'piloto_licencia' */
-alter table licencia
-  add constraint piloto_licencia
-    foreign key (id_piloto) references piloto (id_trabajador);
-
-/* Relation 'vuelo_maneja' */
-alter table piloto_vuelo
-  add constraint vuelo_maneja foreign key (id_vuelo) references vuelo (id);
-
-/* Relation 'piloto_maneja' */
-alter table piloto_vuelo
-  add constraint piloto_maneja
-    foreign key (id_piloto) references piloto (id_trabajador);
-
-/* Relation 'licencia_maneja' */
-alter table piloto_vuelo
-  add constraint licencia_maneja
-    foreign key (id_licencia) references licencia (id);
-
 /* Relation 'modelo_avion' */
 alter table avion
   add constraint modelo_avion foreign key (id_modelo) references modelo (id);
@@ -284,17 +257,12 @@ alter table trabajador_aerolinea
   add constraint aerolinea_trabajador_aerolinea
     foreign key (id_aerolinea) references aerolinea (id);
 
-/* Relation 'trabajador_piloto' */
-alter table piloto
-  add constraint trabajador_piloto
+/* Relation 'trabajador_trabajador_vuelo' */
+alter table trabajador_vuelo
+  add constraint trabajador_trabajador_vuelo
     foreign key (id_trabajador) references trabajador (id);
 
-/* Relation 'tripulante_tripulante_vuelo' */
-alter table tripulante_vuelo
-  add constraint tripulante_tripulante_vuelo
-    foreign key (id_tripulante) references tripulante (id_trabajador);
-
-/* Relation 'trabajador_tripulante' */
-alter table tripulante
-  add constraint trabajador_tripulante
-    foreign key (id_trabajador) references trabajador (id);
+/* Relation 'trabajador_licencia' */
+alter table licencia
+  add constraint trabajador_licencia
+    foreign key (piloto_id) references trabajador (id);

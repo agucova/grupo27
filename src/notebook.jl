@@ -268,17 +268,6 @@ struct Trabajador
 	fecha_nacimiento::Date
 end
 
-# ╔═╡ 22617b8c-d588-4f6a-86bd-5e84074e0aef
-struct Tripulante
-	id_trabajador::Int64
-	rol::String
-end
-
-# ╔═╡ 70771d56-0ac5-4627-b86b-10f5bf6416d8
-struct Piloto
-	id_trabajador::Int64
-end
-
 # ╔═╡ be0be98f-0b55-4703-a7fb-d1ba82ee0f45
 struct Licencia
 	id::Int64
@@ -314,7 +303,7 @@ end
 md"""Y ahora empezamos a rellenar con las estructuras de datos"""
 
 # ╔═╡ a242d04e-6898-46b6-bfe3-f3635300ab81
-ispilot(t) = ! ismissing(t.rol) && t.rol ∈ ["Piloto", "Copiloto"]
+ispilot(t) = (! ismissing(t.rol) && t.rol ∈ ["Piloto", "Copiloto"]) || (! ismissing(t.licencia_actual_id))
 
 # ╔═╡ a9e4af11-8cd0-443a-a9b9-591de1e3287d
 iscrew(t) = ! ismissing(t.rol) && t.rol ∈ ["Tripulante de Cabina", "Paramedico"]
@@ -373,34 +362,14 @@ begin
 		)
 			push!(licencias, licencia_from_t(t))
 		end
-		if ispilot(t)
-			# Piloto
-			if ! t_id_exists(pilotos, t.trabajador_id)
-				push!(pilotos, Piloto(t.trabajador_id))
-			end
-		elseif iscrew(t)
-			# Tripulante
-			if ! t_id_exists(tripulantes, t.trabajador_id)
-				push!(tripulantes, Tripulante(
-					t.trabajador_id,
-					t.rol
-				))
-			end
-		end
 	end
 end
 
 # ╔═╡ 0ce6975f-8a48-4cad-bbe5-b10faa5b73d8
 trabajadores
 
-# ╔═╡ cc26848c-1e5e-4af7-8db8-c9b6a7939437
-tripulantes
-
 # ╔═╡ 746b8029-b76f-44c1-a075-8dea9a4b58a0
 licencias
-
-# ╔═╡ 3701f6e7-8d36-4022-92e6-b75e62436c29
-length(tripulantes)
 
 # ╔═╡ 41212a6a-dd84-46ef-b840-5dbeed851e4b
 length(licencias)
@@ -410,12 +379,6 @@ md"""Revisamos que no hayan duplicaciones:"""
 
 # ╔═╡ dc7f0787-d980-4635-8512-051846d8644f
 @assert unique(trabajadores) == trabajadores "Las entradas de trip. deberían ser únicas"
-
-# ╔═╡ 68c28b8b-6212-43e6-9784-546c35ba3a07
-@assert unique(pilotos) == pilotos "Las entradas de trip. deberían ser únicas"
-
-# ╔═╡ 4b2ba701-7f42-4b10-92f5-2e40bdab315d
-@assert unique(tripulantes) == tripulantes "Las entradas de trip. deberían ser únicas"
 
 # ╔═╡ 0977b4ed-845f-4501-9bde-05d1c7ff0602
 @assert unique(licencias) == licencias "Las licencias deberían ser únicas."
@@ -560,16 +523,9 @@ struct Vuelo
 end
 
 # ╔═╡ e1a59c14-ae75-4a29-a71f-44c3e9b32f88
-struct TripulanteVuelo
+struct TrabajadorVuelo
 	id_vuelo::Int64
-	id_tripulante::Int64
-end
-
-# ╔═╡ 9e7d7f00-ed2e-438b-9c57-b164904a6ddb
-struct PilotoVuelo
-	id_vuelo::Int64
-	id_piloto::Int64
-	id_licencia::Int64
+	id_trabajador::Int64
 	rol::String
 end
 
@@ -684,8 +640,7 @@ costos
 
 # ╔═╡ e1cd7e84-f62c-42e1-b18c-49ff9ce8368a
 begin
-	piloto_vuelos = PilotoVuelo[]
-	tripulante_vuelos = TripulanteVuelo[]
+	trabajador_vuelos = TrabajadorVuelo[]
 
 	for t in eachrow(tabla_trabajadores)
 		ismissing(t.rol) && continue
@@ -696,35 +651,26 @@ begin
 
 		# If the row does seem to indicate employment
 		# in a specific flight (by coherence)
-		if aerolinea.id == vuelo.id_aerolinea
-			if ispilot(t)
-				push!(piloto_vuelos, PilotoVuelo(
+		if (
+			aerolinea.id == vuelo.id_aerolinea &&
+			exists(tv -> tv.id_vuelo == vuelo.id && tv.id_trabajador == t.trabajador_id, trabajador_vuelos)
+			)
+			if ! ismissing(t.rol)
+				push!(trabajador_vuelos, TrabajadorVuelo(
 					vuelo.id,
 					t.trabajador_id,
-					t.licencia_actual_id,
 					t.rol
-				))
-			elseif iscrew(t)
-				push!(tripulante_vuelos, TripulanteVuelo(
-					vuelo.id,
-					t.trabajador_id
 				))
 			end
 		end
 	end
 end
 
-# ╔═╡ 8d46a039-cd65-47f6-a22a-cc02ab551fd7
-piloto_vuelos
-
-# ╔═╡ 045e52bc-df79-4336-8bd0-83fc1d2b64c9
-@assert unique(piloto_vuelos) == piloto_vuelos
-
-# ╔═╡ 33160a18-ecde-4c40-85b6-d63d7a2b39ad
-tripulante_vuelos
-
 # ╔═╡ 4edd0841-2111-428c-8ccf-799e185f66a0
-@assert unique(tripulante_vuelos) == tripulante_vuelos
+@assert unique(trabajador_vuelos) == trabajador_vuelos
+
+# ╔═╡ 913b50f1-4aa6-4c36-9229-cb7eecd802a1
+trabajador_vuelos
 
 # ╔═╡ e843330f-f879-45f6-b1cd-3aeb4ca2518d
 md"""### Reservas"""
@@ -890,17 +836,15 @@ begin
 	rutas |> CSV.write("../tables/ruta.csv")
 	puntos_ruta |> CSV.write("../tables/punto_ruta.csv")
 
-	trabajadores |> CSV.write("../tables/trabajadores.csv")
-	tripulantes |> CSV.write("../tables/tripulantes.csv")
-	tripulante_vuelos |> CSV.write("../tables/tripulante_vuelo.csv")
-	pilotos |> CSV.write("../tables/piloto.csv")
-	piloto_vuelos |> CSV.write("../tables/piloto_vuelo.csv")
+	trabajadores |> CSV.write("../tables/trabajador.csv")
+	trabajador_vuelos |> CSV.write("../tables/trabajador_vuelo.csv")
 	licencias |> CSV.write("../tables/licencia.csv")
 
 	aerolineas |> CSV.write("../tables/aerolinea.csv")
 	trabajador_aerolineas |> CSV.write("../tables/trabajador_aerolinea.csv")
 
 	aviones |> CSV.write("../tables/avion.csv")
+	modelos |> CSV.write("../tables/modelo.csv")
 	vuelos |> CSV.write("../tables/vuelo.csv")
 	costos |> CSV.write("../tables/costo.csv")
 	pasajeros |> CSV.write("../tables/pasajero.csv")
@@ -1352,32 +1296,26 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╟─22ef1f47-1ced-4f4b-ac60-ce4eb6996eb8
 # ╟─e2ad59e3-481e-43bb-8c28-463ceeacc2bf
 # ╠═6b40a893-47f5-49fa-bd96-1167f07ebc0c
-# ╠═22617b8c-d588-4f6a-86bd-5e84074e0aef
-# ╠═70771d56-0ac5-4627-b86b-10f5bf6416d8
 # ╠═be0be98f-0b55-4703-a7fb-d1ba82ee0f45
 # ╠═4719aca1-3887-4474-8e5a-0260d40d516e
 # ╟─929b7157-8038-47c2-9669-632561ce7fe1
 # ╠═fd893daa-efa0-411e-9903-8ec82392b2d5
 # ╠═7b318091-534b-4173-88bf-d82779a45ed9
 # ╟─80e237dd-a910-48f4-96eb-bb9a58998220
-# ╟─a242d04e-6898-46b6-bfe3-f3635300ab81
+# ╠═a242d04e-6898-46b6-bfe3-f3635300ab81
 # ╟─a9e4af11-8cd0-443a-a9b9-591de1e3287d
 # ╟─158fb197-1742-4fe6-8fd7-06dd3ccb7c40
-# ╟─a32074ef-c685-4682-935d-688b15f4ea7b
+# ╠═a32074ef-c685-4682-935d-688b15f4ea7b
 # ╟─f6ed47b5-afae-443f-a00f-6874ce4f03d3
 # ╟─7224d67e-d7ca-478c-87e6-1c09c4924793
 # ╟─a18a5446-c3e6-4bf5-b9fa-29473e75d53f
 # ╟─33d54db4-209a-4f67-93f9-ef93ab35aea1
 # ╠═b624eb5a-a7d8-4f9f-a128-65974bc240f1
 # ╠═0ce6975f-8a48-4cad-bbe5-b10faa5b73d8
-# ╠═cc26848c-1e5e-4af7-8db8-c9b6a7939437
 # ╠═746b8029-b76f-44c1-a075-8dea9a4b58a0
-# ╠═3701f6e7-8d36-4022-92e6-b75e62436c29
 # ╠═41212a6a-dd84-46ef-b840-5dbeed851e4b
 # ╟─8a7eee3a-78aa-40ca-aca6-5b6d63a8e045
 # ╠═dc7f0787-d980-4635-8512-051846d8644f
-# ╠═68c28b8b-6212-43e6-9784-546c35ba3a07
-# ╠═4b2ba701-7f42-4b10-92f5-2e40bdab315d
 # ╠═0977b4ed-845f-4501-9bde-05d1c7ff0602
 # ╟─845361e9-c256-40ba-a7ed-a75ddf163b02
 # ╟─d5c42dc3-1729-4f03-a7ca-10cefc617382
@@ -1401,7 +1339,6 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═22ce3784-45a6-49bb-a643-5b25397c849c
 # ╠═08948bf5-859b-49db-bef9-2aa47314273e
 # ╠═e1a59c14-ae75-4a29-a71f-44c3e9b32f88
-# ╠═9e7d7f00-ed2e-438b-9c57-b164904a6ddb
 # ╠═fb1f4340-0b89-4393-abf0-1a1c2a6ecdc2
 # ╠═a45876af-6855-4e43-b0ab-355349ea56a2
 # ╠═45383fd2-901a-492d-8e9c-498d3b9f55e7
@@ -1416,10 +1353,8 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═ab62c193-cce5-4a3a-915e-645166fd6c71
 # ╠═f30a94a2-8d76-40cc-98b9-d0d6600e1bdb
 # ╠═e1cd7e84-f62c-42e1-b18c-49ff9ce8368a
-# ╠═8d46a039-cd65-47f6-a22a-cc02ab551fd7
-# ╠═045e52bc-df79-4336-8bd0-83fc1d2b64c9
-# ╠═33160a18-ecde-4c40-85b6-d63d7a2b39ad
 # ╠═4edd0841-2111-428c-8ccf-799e185f66a0
+# ╠═913b50f1-4aa6-4c36-9229-cb7eecd802a1
 # ╟─e843330f-f879-45f6-b1cd-3aeb4ca2518d
 # ╠═2a5851d0-cf78-4b1a-86d3-3a1859fcfe42
 # ╠═f5f15f65-9cb1-46ec-b917-54a5e4d65db7
