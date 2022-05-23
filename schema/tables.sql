@@ -24,6 +24,8 @@ drop table if exists tripulante_vuelo cascade;
 drop table if exists piloto_vuelo cascade;
 drop table if exists trabajador_aerolinea cascade;
 drop table if exists modelo cascade;
+drop table if exists trabajador_vuelo cascade;
+drop table if exists nombre_modelo;
 
 /* Table 'aerolinea' */
 create table aerolinea(
@@ -57,7 +59,7 @@ create table vuelo(
   fecha_llegada timestamp with time zone not null,
   velocidad float8 not null,
   altitud float8 not null,
-  estado varchar(20),
+  estado varchar(20) not null,
   primary key(id)
 );
 
@@ -99,21 +101,10 @@ create table punto_ruta(
   primary key(indice, id_ruta)
 );
 
-/* Table 'pasajero' */
-create table pasajero(
-  id serial not null,
-  pasaporte varchar(40) not null,
-  nombre varchar(50) not null,
-  fecha_nacimiento date not null,
-  nacionalidad varchar(50) not null,
-  primary key(id),
-  constraint pasaporte_pasajero unique(pasaporte)
-);
-
 /* Table 'reserva' */
 create table reserva(
   id integer not null,
-  codigo varchar(12) not null,
+  codigo char(12) not null,
   id_reservante integer not null,
   primary key(id),
   constraint codigo_reserva unique(codigo)
@@ -123,8 +114,8 @@ create table reserva(
 create table ticket(
   id integer not null,
   id_vuelo integer not null,
-  id_pasajero integer not null,
   id_reserva integer not null,
+  id_pasajero integer not null,
   asiento integer not null,
   clase varchar(20) not null,
   comida_y_maleta boolean not null,
@@ -149,8 +140,7 @@ create table avion(
 );
 
 /* Table 'ruta' */
-create table ruta
-  (id serial not null, nombre varchar(6) not null, primary key(id));
+create table ruta(id serial not null, nombre char(6) not null, primary key(id));
 
 /* Table 'pais' */
 create table pais
@@ -158,21 +148,37 @@ create table pais
 
 /* Table 'licencia' */
 create table licencia
-  (id integer not null, piloto_id integer not null, primary key(id));
+  (id integer not null, id_piloto integer not null, primary key(id));
 
 /* Table 'modelo' */
 create table modelo(
   id integer not null,
-  peso float8 not null,
   codigo varchar(40) not null,
-  nombre varchar(100) not null,
-  primary key(id)
+  id_nombre integer not null,
+  peso float8 not null,
+  primary key(id),
+  constraint codigo_modelo unique(codigo)
 );
 
 /* Table 'trabajador_aerolinea' */
 create table trabajador_aerolinea(
 id_trabajador integer not null, id_aerolinea integer not null,
   primary key(id_trabajador, id_aerolinea)
+);
+
+/* Table 'nombre_modelo' */
+create table nombre_modelo
+  (id integer not null, nombre varchar(100) not null, primary key(id));
+
+/* Table 'pasajero' */
+create table pasajero(
+  id integer not null,
+  pasaporte varchar(40) not null,
+  nombre varchar(100) not null,
+  fecha_nacimiento date not null,
+  nacionalidad varchar(50) not null,
+  primary key(id),
+  constraint pasajero_pasaporte unique(pasaporte)
 );
 
 /* Relation 'vuelo_tripulante_vuelo' */
@@ -188,16 +194,6 @@ alter table aerodromo
 /* Relation 'vuelo_ticket' */
 alter table ticket
   add constraint vuelo_ticket foreign key (id_vuelo) references vuelo (id);
-
-/* Relation 'pasajero_ticket' */
-alter table ticket
-  add constraint pasajero_ticket
-    foreign key (id_pasajero) references pasajero (id);
-
-/* Relation 'pasajero_reserva' */
-alter table reserva
-  add constraint pasajero_reserva
-    foreign key (id_reservante) references pasajero (id);
 
 /* Relation 'origen_vuelo' */
 alter table vuelo
@@ -265,4 +261,19 @@ alter table trabajador_vuelo
 /* Relation 'trabajador_licencia' */
 alter table licencia
   add constraint trabajador_licencia
-    foreign key (piloto_id) references trabajador (id);
+    foreign key (id_piloto) references trabajador (id);
+
+/* Relation 'nombre_modelo_modelo' */
+alter table modelo
+  add constraint nombre_modelo_modelo
+    foreign key (id_nombre) references nombre_modelo (id);
+
+/* Relation 'pasajero_ticket' */
+alter table ticket
+  add constraint pasajero_ticket
+    foreign key (id_pasajero) references pasajero (id);
+
+/* Relation 'pasajero_reserva' */
+alter table reserva
+  add constraint pasajero_reserva
+    foreign key (id_reservante) references pasajero (id);

@@ -3,6 +3,7 @@
 \copy aerodromo from 'aerodromo.csv' delimiter ',' csv header
 \copy ruta from 'ruta.csv' delimiter ',' csv header
 \copy punto_ruta from 'punto_ruta.csv' delimiter ',' csv header
+\copy nombre_modelo from 'nombre_modelo.csv' delimiter ',' csv header
 \copy modelo from 'modelo.csv' delimiter ',' csv header
 \copy costo from 'costo.csv' delimiter ',' csv header
 \copy avion from 'avion.csv' delimiter ',' csv header
@@ -12,9 +13,6 @@
 \copy vuelo from 'vuelo.csv' delimiter ',' csv header
 \copy ticket from 'ticket.csv' delimiter ',' csv header
 \copy trabajador from 'trabajador.csv' delimiter ',' csv header
-\copy piloto from 'piloto.csv' delimiter ',' csv header
+\copy trabajador_vuelo from 'trabajador_vuelo.csv' delimiter ',' csv header
 \copy licencia from 'licencia.csv' delimiter ',' csv header
-\copy piloto_vuelo from 'piloto_vuelo.csv' delimiter ',' csv header
-\copy tripulante from 'tripulante.csv' delimiter ',' csv header
-\copy tripulante_vuelo from 'tripulante_vuelo.csv' delimiter ',' csv header
 \copy trabajador_aerolinea from 'trabajador_aerolinea.csv' delimiter ',' csv header

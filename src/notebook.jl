@@ -1,6 +1,10 @@
 ### A Pluto.jl notebook ###
 # v0.19.5
 
+#> [frontmatter]
+#> title = "Entrega 2 BBDD: Procesamiento de Datos"
+#> date = "2022-05-02"
+
 using Markdown
 using InteractiveUtils
 
@@ -18,9 +22,14 @@ TableOfContents(title="📚 Tabla de Contenidos", aside=true)
 
 # ╔═╡ 58133e6a-6038-446b-ab68-701cfd28ee38
 md"""
-# Preprocesamiento de Datos - BBDD
-## Dependencias
+# E2 BBDD: Procesamiento de Datos
+Este notebook contiene todo el código de procesamiento y validación de datos utilizado para la elaboración de tablas en nuestra entrega 2 de BBDD. [Aquí](https://codd.ing.puc.cl/~grupo27/) se puede encontrar el insumo final de la entrega.
+
+**Autores**: Nicolás Cañete, Agustín Covarrubias
 """
+
+# ╔═╡ 963ac3e3-d920-429b-823f-58c6c2942fec
+md"## Dependencias"
 
 # ╔═╡ 36fd3665-c41f-4142-bfe2-260bc7bf000b
 import CSV
@@ -247,13 +256,6 @@ nombres_ruta = [ruta.nombre for ruta in rutas]
 # ╔═╡ 58aab315-af4c-4329-a94d-1d143d93c518
 @assert unique(nombres_ruta) == nombres_ruta "Las rutas debiesen ser únicas"
 
-# ╔═╡ be69af11-b8c3-40ad-b7e1-2ed0dd6432a0
-# ╠═╡ disabled = true
-#=╠═╡
-[puntos_ruta[i, :] for i in findall(p -> p.id_ruta == 14, puntos_ruta)]
-
-  ╠═╡ =#
-
 # ╔═╡ 22ef1f47-1ced-4f4b-ac60-ce4eb6996eb8
 md"""### Trabajadores"""
 
@@ -344,9 +346,6 @@ t_id_exists(c, id) = exists(x -> x.id_trabajador == id, c)
 # ╔═╡ b624eb5a-a7d8-4f9f-a128-65974bc240f1
 begin
 	trabajadores = Trabajador[]
-	tripulantes = Tripulante[]
-	pilotos = Piloto[]
-
 	licencias = Licencia[]
 
 	for t in eachrow(tabla_trabajadores)
@@ -494,8 +493,14 @@ md"""### Vuelos"""
 # ╔═╡ bfe79225-f70f-4331-9ee8-bedcd1c1a436
 struct Modelo
 	id::Int64
-	peso::Float64
 	codigo::String
+	id_nombre::Int64
+	peso::Float64
+end
+
+# ╔═╡ 1b9e7986-f11a-4917-9c80-166fc7a2f7ea
+struct NombreModelo
+	id::Int64
 	nombre::String
 end
 
@@ -543,15 +548,24 @@ codigo_exists(c, codigo) = exists(x -> x.codigo == codigo, c)
 begin
 	aviones = Avion[]
 	modelos = Modelo[]
+	nombre_modelos = NombreModelo[]
 
 	for v in eachrow(tabla_vuelos)
-		modelo = findfirst(m -> m.codigo == v.modelo, modelos)
+		nombre = fetchfirst(nm -> nm.nombre == v.nombre_aeronave, nombre_modelos)
+		if isnothing(nombre)
+			nombre = NombreModelo(
+				length(nombre_modelos) + 1,
+				v.nombre_aeronave
+			)
+			push!(nombre_modelos, nombre)
+		end
+		modelo = fetchfirst(m -> m.codigo == v.modelo, modelos)
 		if isnothing(modelo)
 			modelo = Modelo(
 				length(modelos) + 1,
-				v.peso,
 				v.modelo,
-				v.nombre_aeronave
+				nombre.id,
+				v.peso
 			)
 			push!(modelos, modelo)
 		end
@@ -571,6 +585,12 @@ modelos
 
 # ╔═╡ 164b9b5c-6256-4f72-ae76-d1aa1483be16
 @assert unique(modelos) == modelos
+
+# ╔═╡ d155e137-d5af-400a-8096-a179b626e780
+nombre_modelos
+
+# ╔═╡ 44418c0f-bf1f-4b51-b6ff-b1524f668233
+@assert unique(nombre_modelos) == nombre_modelos
 
 # ╔═╡ 57c1cda1-db62-446a-b81c-6bd34185ca1d
 aviones
@@ -653,7 +673,7 @@ begin
 		# in a specific flight (by coherence)
 		if (
 			aerolinea.id == vuelo.id_aerolinea &&
-			exists(tv -> tv.id_vuelo == vuelo.id && tv.id_trabajador == t.trabajador_id, trabajador_vuelos)
+			! exists(tv -> tv.id_vuelo == vuelo.id && tv.id_trabajador == t.trabajador_id, trabajador_vuelos)
 			)
 			if ! ismissing(t.rol)
 				push!(trabajador_vuelos, TrabajadorVuelo(
@@ -678,7 +698,7 @@ md"""### Reservas"""
 # ╔═╡ 2a5851d0-cf78-4b1a-86d3-3a1859fcfe42
 struct Pasajero
 	id::Int64
-	pasaporte::Union{String, Missing}
+	pasaporte::String
 	nombre::String
 	fecha_nacimiento::Date
 	nacionalidad::String
@@ -695,8 +715,8 @@ end
 struct Ticket
 	id::Int64
 	id_vuelo::Int64
-	id_pasajero::Int64
 	id_reserva::Int64
+	id_pasajero::Int64
 	asiento::Int64
 	clase::String
 	comida_y_maleta::Bool
@@ -778,7 +798,6 @@ begin
 	for t in eachrow(tabla_reservas)
 		# Reserva
 		reservante = find_reservante(pasajeros, t)
-		# TODO: Deberíamos incluir reservas defectuosas?
 		if ! id_exists(reservas, t.reserva_id)
 			push!(reservas, Reserva(
 				t.reserva_id,
@@ -797,8 +816,8 @@ begin
 			push!(tickets, Ticket(
 				t.numero_ticket,
 				t.vuelo_id,
-				pasajero.id,
 				t.reserva_id,
+				pasajero.id,
 				t.numero_asiento,
 				t.clase,
 				t.comida_y_maleta == "VERDADERO"
@@ -845,8 +864,11 @@ begin
 
 	aviones |> CSV.write("../tables/avion.csv")
 	modelos |> CSV.write("../tables/modelo.csv")
-	vuelos |> CSV.write("../tables/vuelo.csv")
+	nombre_modelos |> CSV.write("../tables/nombre_modelo.csv")
 	costos |> CSV.write("../tables/costo.csv")
+	
+	vuelos |> CSV.write("../tables/vuelo.csv")
+	
 	pasajeros |> CSV.write("../tables/pasajero.csv")
 	reservas |> CSV.write("../tables/reserva.csv")
 	tickets |> CSV.write("../tables/ticket.csv")
@@ -1248,6 +1270,7 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╔═╡ Cell order:
 # ╟─3a241435-ea7d-4f24-982d-0ceec9218318
 # ╟─58133e6a-6038-446b-ab68-701cfd28ee38
+# ╟─963ac3e3-d920-429b-823f-58c6c2942fec
 # ╠═36fd3665-c41f-4142-bfe2-260bc7bf000b
 # ╠═8a224b4b-f755-40b2-8bed-fad5bb58f785
 # ╠═9f130e24-32de-4a63-b8d9-202b5456ba58
@@ -1292,7 +1315,6 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╟─4405fe29-51d0-4bc8-aef6-bf1245ac9f16
 # ╠═072f0721-5d0e-406e-82db-545ce1db11ed
 # ╠═58aab315-af4c-4329-a94d-1d143d93c518
-# ╠═be69af11-b8c3-40ad-b7e1-2ed0dd6432a0
 # ╟─22ef1f47-1ced-4f4b-ac60-ce4eb6996eb8
 # ╟─e2ad59e3-481e-43bb-8c28-463ceeacc2bf
 # ╠═6b40a893-47f5-49fa-bd96-1167f07ebc0c
@@ -1336,6 +1358,7 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═9cfa96a3-9f2b-4408-85bd-f37f8e63cacb
 # ╟─71cbde30-d2ae-4729-a499-69b842c7c138
 # ╠═bfe79225-f70f-4331-9ee8-bedcd1c1a436
+# ╠═1b9e7986-f11a-4917-9c80-166fc7a2f7ea
 # ╠═22ce3784-45a6-49bb-a643-5b25397c849c
 # ╠═08948bf5-859b-49db-bef9-2aa47314273e
 # ╠═e1a59c14-ae75-4a29-a71f-44c3e9b32f88
@@ -1344,6 +1367,8 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═45383fd2-901a-492d-8e9c-498d3b9f55e7
 # ╟─1662c88a-3fec-4e40-9467-95b5cfe7c13d
 # ╠═164b9b5c-6256-4f72-ae76-d1aa1483be16
+# ╟─d155e137-d5af-400a-8096-a179b626e780
+# ╠═44418c0f-bf1f-4b51-b6ff-b1524f668233
 # ╟─57c1cda1-db62-446a-b81c-6bd34185ca1d
 # ╠═dbba77c0-4ace-4c07-8557-86f6bbfd6cc8
 # ╠═c29d6738-e582-4c87-862e-9d26cfc29a9a
