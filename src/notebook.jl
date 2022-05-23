@@ -53,7 +53,7 @@ tabla_trabajadores = CSV.read("../data/trabajadores.csv", DataFrame, dateformat=
 md"""Para la tabla reserva debemos también ajustar el formato de fecha:"""
 
 # ╔═╡ 11e43a42-0e5b-4aea-956d-fc714326ace3
-tabla_reservas = CSV.read("../data/reservasV2.csv", DataFrame, dateformat=DateFormat("d-m-y"))
+tabla_reservas = CSV.read("../data/reservasV2.csv", DataFrame, dateformat=DateFormat("d-m-y"), truestrings=["VERDADERO"], falsestrings=["FALSO"])
 
 # ╔═╡ d5b601cd-756d-40f8-bf53-9d2a19f3d5e9
 md"""El archivo de vuelos usa un formato de fecha distinto a reservas y trabajadores, y aunque incluye horas, no son horas *timezone aware*, por lo que asumimos que se encuentran en UTC."""
@@ -538,7 +538,7 @@ end
 struct Costo
 	id_ruta::Int64
 	id_modelo::Int64
-	monto::Int64
+	monto::BigInt
 end
 
 # ╔═╡ a45876af-6855-4e43-b0ab-355349ea56a2
@@ -788,6 +788,7 @@ begin
 		reserva_unica = ismissing(pasajero)
 		if reserva_unica
 			# Nos saltamos entradas defectuosas
+			println(t)
 			continue
 		end
 		if isnothing(pasajero)
@@ -820,7 +821,7 @@ begin
 				pasajero.id,
 				t.numero_asiento,
 				t.clase,
-				t.comida_y_maleta == "VERDADERO"
+				t.comida_y_maleta
 			))
 		end
 	end
